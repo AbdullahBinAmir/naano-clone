@@ -263,6 +263,10 @@ export interface Database {
         Args: { p_collaboration_id: string };
         Returns: void;
       };
+      update_collaboration_status: {
+        Args: { p_collaboration_id: string; p_action: string };
+        Returns: void;
+      };
     };
   };
 }

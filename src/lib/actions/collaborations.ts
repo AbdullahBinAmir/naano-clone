@@ -149,59 +149,22 @@ export async function updateCollaborationStatusAction(input: unknown): Promise<C
   } = await supabase.auth.getUser();
   if (!user) return { error: "You need to sign in first." };
 
-  const { data: collab, error: fetchError } = await supabase
-    .from("collaborations")
-    .select("id, status, creator_profile_id, brand_profile_id")
-    .eq("id", parsed.data.collaborationId)
-    .maybeSingle();
-  if (fetchError) return { error: fetchError.message };
-  if (!collab) return { error: "Collaboration not found." };
-
-  const isCreator = collab.creator_profile_id === user.id;
-  const isBrand = collab.brand_profile_id === user.id;
-  if (!isCreator && !isBrand) return { error: "You're not part of this collaboration." };
-
-  let nextStatus: "active" | "declined" | "completed";
-  let nextActionText: string;
-
-  if (parsed.data.action === "accept") {
-    if (collab.status === "applied" && isBrand) {
-      nextStatus = "active";
-      nextActionText = "Publish your post";
-    } else if (collab.status === "needs_action" && isCreator) {
-      nextStatus = "active";
-      nextActionText = "Publish your post";
-    } else {
-      return { error: "This collaboration can't be accepted right now." };
-    }
-  } else if (parsed.data.action === "decline") {
-    if (collab.status === "applied" && isBrand) {
-      nextStatus = "declined";
-      nextActionText = "Declined by brand";
-    } else if (collab.status === "needs_action" && isCreator) {
-      nextStatus = "declined";
-      nextActionText = "Declined by creator";
-    } else {
-      return { error: "This collaboration can't be declined right now." };
-    }
-  } else {
-    if (collab.status === "active" && isCreator) {
-      nextStatus = "completed";
-      nextActionText = "Marked as posted";
-    } else {
-      return { error: "Only the creator can mark an active collaboration as posted." };
-    }
-  }
-
-  const { error } = await supabase
-    .from("collaborations")
-    .update({ status: nextStatus, next_action_text: nextActionText })
-    .eq("id", collab.id);
+  // The state machine itself now lives entirely in the
+  // update_collaboration_status RPC (see
+  // supabase/migrations/0011_collaboration_write_integrity.sql) — there is
+  // no direct client UPDATE path on collaborations at all any more, since
+  // one existed only to be reachable via a raw REST call bypassing this
+  // action's checks entirely (forge status straight to 'completed', mint a
+  // fabricated payout).
+  const { error } = await supabase.rpc("update_collaboration_status", {
+    p_collaboration_id: parsed.data.collaborationId,
+    p_action: parsed.data.action,
+  });
   if (error) return { error: error.message };
 
-  if (nextStatus === "completed") {
-    await recordCollaborationPayout(supabase, collab.id);
-    await activateReferralsForCompletedCollaboration(supabase, collab.id);
+  if (parsed.data.action === "complete") {
+    await recordCollaborationPayout(supabase, parsed.data.collaborationId);
+    await activateReferralsForCompletedCollaboration(supabase, parsed.data.collaborationId);
   }
 
   return {};
