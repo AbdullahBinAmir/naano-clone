@@ -1,0 +1,168 @@
+@import "tailwindcss";
+
+/*
+ * Dark liquid-glass design tokens.
+ * Recipe follows the apple-design skill's translucent-materials guidance:
+ * backdrop-filter blur+saturate over a low-opacity fill, with a bright top
+ * edge to read as "light catching the material." Adapted for a dark base
+ * (Apple's own recipe is tuned for light chrome).
+ */
+:root {
+  /* Surface scale — near-black base, each step a little lighter for stacking */
+  --color-base: #0a0a0c;
+  --color-surface-1: #111114;
+  --color-surface-2: #17171b;
+  --color-surface-3: #1e1e23;
+
+  --color-foreground: #f5f5f7;
+  --color-foreground-muted: #a1a1aa;
+  --color-foreground-subtle: #6b6b74;
+
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.14);
+
+  /* Accent — a deliberate teal/green, distinct from generic SaaS blue */
+  --color-accent: #34d8b0;
+  --color-accent-foreground: #06231c;
+  --color-accent-muted: rgba(52, 216, 176, 0.16);
+
+  --color-danger: #f2555a;
+  --color-warning: #f2b559;
+  --color-success: #34d8b0;
+
+  /* Glass material tokens */
+  --glass-bg: rgba(255, 255, 255, 0.055);
+  --glass-bg-strong: rgba(255, 255, 255, 0.09);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-border-top: rgba(255, 255, 255, 0.18);
+  --glass-blur: 18px;
+  --glass-blur-strong: 28px;
+  --glass-saturate: 160%;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+
+  --shadow-glass: 0 1px 1px rgba(0, 0, 0, 0.2), 0 8px 30px rgba(0, 0, 0, 0.35);
+  --shadow-glass-lg: 0 2px 2px rgba(0, 0, 0, 0.25), 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+@theme inline {
+  --color-base: var(--color-base);
+  --color-surface-1: var(--color-surface-1);
+  --color-surface-2: var(--color-surface-2);
+  --color-surface-3: var(--color-surface-3);
+  --color-foreground: var(--color-foreground);
+  --color-foreground-muted: var(--color-foreground-muted);
+  --color-foreground-subtle: var(--color-foreground-subtle);
+  --color-border: var(--color-border);
+  --color-border-strong: var(--color-border-strong);
+  --color-accent: var(--color-accent);
+  --color-accent-foreground: var(--color-accent-foreground);
+  --color-accent-muted: var(--color-accent-muted);
+  --color-danger: var(--color-danger);
+  --color-warning: var(--color-warning);
+  --color-success: var(--color-success);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-base);
+  color: var(--color-foreground);
+}
+
+/* Ambient background texture so backdrop-filter blur has something to
+   distort — a flat single color behind glass reads as flat, not "material." */
+.ambient-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 50% at 15% 0%, rgba(52, 216, 176, 0.14), transparent 60%),
+    radial-gradient(50% 45% at 85% 15%, rgba(99, 102, 241, 0.10), transparent 60%),
+    radial-gradient(70% 60% at 50% 100%, rgba(52, 216, 176, 0.06), transparent 60%),
+    var(--color-base);
+}
+
+.glass-surface {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-top);
+  box-shadow: var(--shadow-glass);
+}
+
+.glass-surface-strong {
+  background: var(--glass-bg-strong);
+  -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur-strong)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-top);
+  box-shadow: var(--shadow-glass-lg);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass-surface,
+  .glass-surface-strong {
+    background: var(--color-surface-2);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.input {
+  width: 100%;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-strong);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.55rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-foreground);
+  outline: none;
+  transition: border-color 150ms ease-out, background-color 150ms ease-out;
+}
+
+.input::placeholder {
+  color: var(--color-foreground-subtle);
+}
+
+.input:focus {
+  border-color: var(--color-accent);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+::selection {
+  background: var(--color-accent-muted);
+  color: var(--color-foreground);
+}
+
+/* Thin, unobtrusive scrollbars that fit the dark-glass aesthetic */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}

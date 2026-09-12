@@ -1,0 +1,95 @@
+import type { AnalyticsSnapshot, LinkedInPost } from "@/types/domain";
+
+export const analyticsByCreator: Record<string, AnalyticsSnapshot> = {
+  alexis: {
+    creatorProfileId: "creator-alexis",
+    capturedAt: "2026-09-11T06:00:00.000Z",
+    publicPostReach: 486000,
+    publicPostsCount: 58,
+    publicEngagements: 21400,
+    followerCount: 42300,
+    pctPostsWithReachData: 92,
+    source: "manual_entry",
+    reachHistory: [
+      { date: "Apr", reach: 52000, engagements: 2100 },
+      { date: "May", reach: 61000, engagements: 2600 },
+      { date: "Jun", reach: 74000, engagements: 3100 },
+      { date: "Jul", reach: 88000, engagements: 3800 },
+      { date: "Aug", reach: 96000, engagements: 4200 },
+      { date: "Sep", reach: 115000, engagements: 5600 },
+    ],
+  },
+  marcus: {
+    creatorProfileId: "creator-marcus",
+    capturedAt: "2026-09-11T06:00:00.000Z",
+    publicPostReach: 61000,
+    publicPostsCount: 21,
+    publicEngagements: 3200,
+    followerCount: 8100,
+    pctPostsWithReachData: 67,
+    source: "manual_entry",
+    reachHistory: [
+      { date: "Apr", reach: 6200, engagements: 310 },
+      { date: "May", reach: 7800, engagements: 380 },
+      { date: "Jun", reach: 9100, engagements: 420 },
+      { date: "Jul", reach: 11200, engagements: 540 },
+      { date: "Aug", reach: 12800, engagements: 610 },
+      { date: "Sep", reach: 14100, engagements: 940 },
+    ],
+  },
+  juliette: {
+    creatorProfileId: "creator-juliette",
+    capturedAt: "2026-09-11T06:00:00.000Z",
+    publicPostReach: null,
+    publicPostsCount: 0,
+    publicEngagements: 0,
+    followerCount: null,
+    pctPostsWithReachData: 0,
+    source: null,
+    reachHistory: [],
+  },
+};
+
+export const linkedinPostsByCreator: Record<string, LinkedInPost[]> = {
+  alexis: [
+    {
+      id: "post-1",
+      creatorProfileId: "creator-alexis",
+      originalPostUrl: "https://www.linkedin.com/posts/alexis-jarre-demo_gtm-pricing-1",
+      postedAt: "2026-09-05T09:00:00.000Z",
+      reach: 18400,
+      engagements: 612,
+      hasReachData: true,
+    },
+    {
+      id: "post-2",
+      creatorProfileId: "creator-alexis",
+      originalPostUrl: "https://www.linkedin.com/posts/alexis-jarre-demo_gtm-positioning-2",
+      postedAt: "2026-08-28T09:00:00.000Z",
+      reach: 22100,
+      engagements: 734,
+      hasReachData: true,
+    },
+    {
+      id: "post-3",
+      creatorProfileId: "creator-alexis",
+      originalPostUrl: "https://www.linkedin.com/posts/alexis-jarre-demo_gtm-campaigns-3",
+      postedAt: "2026-08-19T09:00:00.000Z",
+      reach: null,
+      engagements: 288,
+      hasReachData: false,
+    },
+  ],
+  marcus: [
+    {
+      id: "post-4",
+      creatorProfileId: "creator-marcus",
+      originalPostUrl: "https://www.linkedin.com/posts/marcus-oduya-demo_revops-forecasting-1",
+      postedAt: "2026-09-03T09:00:00.000Z",
+      reach: 4200,
+      engagements: 190,
+      hasReachData: true,
+    },
+  ],
+  juliette: [],
+};
