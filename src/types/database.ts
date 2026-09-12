@@ -173,6 +173,12 @@ export type LinkedinPostRow = {
   has_reach_data: boolean;
 }
 
+export type CardVisitRow = {
+  id: string;
+  creator_card_id: string;
+  visited_at: string;
+}
+
 export type NotificationRow = {
   id: string;
   profile_id: string;
@@ -215,6 +221,7 @@ export interface Database {
       >;
       linkedin_posts: Table<LinkedinPostRow, Omit<LinkedinPostRow, "id">>;
       notifications: Table<NotificationRow, Omit<NotificationRow, "id" | "created_at">>;
+      card_visits: Table<CardVisitRow, Pick<CardVisitRow, "creator_card_id">>;
     };
     Views: {
       marketplace_creators: { Row: CreatorProfileRow; Relationships: [] };

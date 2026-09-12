@@ -20,14 +20,16 @@ export function CreatorCardPreview({
   return (
     <div className="glass-surface-strong overflow-hidden rounded-xl">
       <div className="relative h-28 w-full bg-gradient-to-br from-accent/25 via-surface-2 to-surface-1">
-        <Image
-          src={card.bannerUrl}
-          alt=""
-          fill
-          priority
-          sizes="(max-width: 640px) 100vw, 480px"
-          className="object-cover opacity-70"
-        />
+        {card.bannerUrl && (
+          <Image
+            src={card.bannerUrl}
+            alt=""
+            fill
+            priority
+            sizes="(max-width: 640px) 100vw, 480px"
+            className="object-cover opacity-70"
+          />
+        )}
       </div>
       <div className="px-6 pb-6">
         <div className="-mt-10 flex items-end justify-between">
