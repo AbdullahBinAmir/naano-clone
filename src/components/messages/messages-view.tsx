@@ -13,15 +13,37 @@ import type { ConversationWithMessages } from "@/lib/messaging/get-conversations
 export function MessagesView({
   conversations: initialConversations,
   currentUserId,
+  initialActiveId,
 }: {
   conversations: ConversationWithMessages[];
   currentUserId: string;
+  initialActiveId?: string;
 }) {
   const [conversations, setConversations] = React.useState(initialConversations);
-  const [activeId, setActiveId] = React.useState(initialConversations[0]?.id);
+  const [activeId, setActiveId] = React.useState(
+    (initialActiveId && initialConversations.some((c) => c.id === initialActiveId)
+      ? initialActiveId
+      : initialConversations[0]?.id),
+  );
   const [draft, setDraft] = React.useState("");
   const [sending, setSending] = React.useState(false);
   const active = conversations.find((c) => c.id === activeId);
+
+  // Adjusting state during render (React's documented pattern for "reset
+  // state when a prop changes") rather than in an effect: fires when
+  // navigating here with a new ?conversation=<id> (e.g. just started via
+  // "Message" from Match or an opportunity) — merges the freshly-fetched
+  // conversation in without discarding whatever's already accumulated in
+  // local state from realtime/optimistic sends.
+  const [appliedActiveId, setAppliedActiveId] = React.useState(initialActiveId);
+  if (initialActiveId && initialActiveId !== appliedActiveId) {
+    setAppliedActiveId(initialActiveId);
+    setActiveId(initialActiveId);
+    if (!conversations.some((c) => c.id === initialActiveId)) {
+      const fresh = initialConversations.find((c) => c.id === initialActiveId);
+      if (fresh) setConversations([fresh, ...conversations]);
+    }
+  }
 
   // Realtime keeps the open thread live — most useful when the other party
   // (viewing the same conversation in their own session) sends a message,

@@ -267,6 +267,10 @@ export interface Database {
         Args: { p_collaboration_id: string; p_action: string };
         Returns: void;
       };
+      create_direct_conversation: {
+        Args: { p_other_profile_id: string };
+        Returns: string;
+      };
     };
   };
 }

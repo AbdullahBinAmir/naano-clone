@@ -3,11 +3,12 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Store } from "lucide-react";
+import { MessageSquare, Store } from "lucide-react";
 import { GlassCard } from "@/components/glass/glass-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { applyToCampaignAction } from "@/lib/actions/collaborations";
+import { startDirectConversationAction } from "@/lib/actions/messages";
 import { formatCurrency } from "@/lib/utils";
 
 interface Opportunity {
@@ -18,11 +19,13 @@ interface Opportunity {
   targetVertical: string;
   brandName: string;
   brandLogoUrl: string;
+  brandProfileId: string;
 }
 
 export function OpportunitiesList({ opportunities }: { opportunities: Opportunity[] }) {
   const router = useRouter();
   const [applyingId, setApplyingId] = React.useState<string | null>(null);
+  const [messagingId, setMessagingId] = React.useState<string | null>(null);
 
   async function handleApply(op: Opportunity) {
     setApplyingId(op.id);
@@ -35,6 +38,18 @@ export function OpportunitiesList({ opportunities }: { opportunities: Opportunit
     }
     toast.success(`Application sent to ${op.brandName}`);
     router.refresh();
+  }
+
+  async function handleMessage(op: Opportunity) {
+    setMessagingId(op.id);
+    const result = await startDirectConversationAction({ otherProfileId: op.brandProfileId });
+    setMessagingId(null);
+
+    if (result.error || !result.conversationId) {
+      toast.error(result.error ?? "Couldn't start that conversation.");
+      return;
+    }
+    router.push(`/dashboard/creator/messages?conversation=${result.conversationId}`);
   }
 
   if (opportunities.length === 0) {
@@ -64,9 +79,20 @@ export function OpportunitiesList({ opportunities }: { opportunities: Opportunit
           </div>
           <div className="flex items-center justify-between border-t border-border pt-4">
             <Badge variant="accent">{formatCurrency(op.budget)} budget</Badge>
-            <Button variant="primary" size="sm" onClick={() => handleApply(op)} disabled={applyingId === op.id}>
-              {applyingId === op.id ? "Applying…" : "Apply"}
-            </Button>
+            <div className="flex gap-1.5">
+              <Button
+                variant="glass"
+                size="sm"
+                onClick={() => handleMessage(op)}
+                disabled={messagingId === op.id}
+                aria-label={`Message ${op.brandName}`}
+              >
+                <MessageSquare className="h-3.5 w-3.5" strokeWidth={1.75} />
+              </Button>
+              <Button variant="primary" size="sm" onClick={() => handleApply(op)} disabled={applyingId === op.id}>
+                {applyingId === op.id ? "Applying…" : "Apply"}
+              </Button>
+            </div>
           </div>
         </GlassCard>
       ))}

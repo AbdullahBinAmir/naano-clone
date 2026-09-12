@@ -4,15 +4,20 @@ import { requireProfile } from "@/lib/auth/require-profile";
 import { createClient } from "@/lib/supabase/server";
 import { getConversationsForUser } from "@/lib/messaging/get-conversations";
 
-export default async function BrandMessagesPage() {
+export default async function BrandMessagesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ conversation?: string }>;
+}) {
   const { user } = await requireProfile("brand");
   const supabase = await createClient();
   const conversations = await getConversationsForUser(supabase, user.id, "brand");
+  const { conversation } = await searchParams;
 
   return (
     <>
       <PageHeader eyebrow="Messages" title="Messages" />
-      <MessagesView conversations={conversations} currentUserId={user.id} />
+      <MessagesView conversations={conversations} currentUserId={user.id} initialActiveId={conversation} />
     </>
   );
 }

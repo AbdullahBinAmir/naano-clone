@@ -3,13 +3,14 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { MapPin, Search } from "lucide-react";
+import { MapPin, MessageSquare, Search } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { GlassCard } from "@/components/glass/glass-card";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { inviteCreatorAction } from "@/lib/actions/collaborations";
+import { startDirectConversationAction } from "@/lib/actions/messages";
 import { formatCurrency, initials } from "@/lib/utils";
 
 interface MatchCreator {
@@ -26,6 +27,7 @@ export function MatchGrid({ creators }: { creators: MatchCreator[] }) {
   const router = useRouter();
   const [query, setQuery] = React.useState("");
   const [invitingId, setInvitingId] = React.useState<string | null>(null);
+  const [messagingId, setMessagingId] = React.useState<string | null>(null);
 
   const filtered = creators.filter((c) => {
     const q = query.toLowerCase();
@@ -44,6 +46,18 @@ export function MatchGrid({ creators }: { creators: MatchCreator[] }) {
     }
     toast.success(`Invitation sent to ${creator.displayName}`);
     router.refresh();
+  }
+
+  async function handleMessage(creator: MatchCreator) {
+    setMessagingId(creator.profileId);
+    const result = await startDirectConversationAction({ otherProfileId: creator.profileId });
+    setMessagingId(null);
+
+    if (result.error || !result.conversationId) {
+      toast.error(result.error ?? "Couldn't start that conversation.");
+      return;
+    }
+    router.push(`/dashboard/brand/messages?conversation=${result.conversationId}`);
   }
 
   return (
@@ -94,9 +108,20 @@ export function MatchGrid({ creators }: { creators: MatchCreator[] }) {
             </div>
             <div className="mt-auto flex items-center justify-between border-t border-border pt-3">
               <span className="font-semibold">{formatCurrency(c.pricePerPost)} / post</span>
-              <Button size="sm" variant="primary" onClick={() => handleInvite(c)} disabled={invitingId === c.profileId}>
-                {invitingId === c.profileId ? "Inviting…" : "Invite"}
-              </Button>
+              <div className="flex gap-1.5">
+                <Button
+                  size="sm"
+                  variant="glass"
+                  onClick={() => handleMessage(c)}
+                  disabled={messagingId === c.profileId}
+                  aria-label={`Message ${c.displayName}`}
+                >
+                  <MessageSquare className="h-3.5 w-3.5" strokeWidth={1.75} />
+                </Button>
+                <Button size="sm" variant="primary" onClick={() => handleInvite(c)} disabled={invitingId === c.profileId}>
+                  {invitingId === c.profileId ? "Inviting…" : "Invite"}
+                </Button>
+              </div>
             </div>
           </GlassCard>
         ))}

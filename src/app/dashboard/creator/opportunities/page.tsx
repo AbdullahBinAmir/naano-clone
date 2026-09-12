@@ -27,6 +27,7 @@ export default async function OpportunitiesPage() {
     targetVertical: string;
     brandName: string;
     brandLogoUrl: string;
+    brandProfileId: string;
   }[] = [];
 
   if (unlocked) {
@@ -53,6 +54,7 @@ export default async function OpportunitiesPage() {
       targetVertical: c.target_vertical,
       brandName: brandById.get(c.brand_profile_id)?.company_name ?? "Brand",
       brandLogoUrl: brandById.get(c.brand_profile_id)?.logo_url ?? "",
+      brandProfileId: c.brand_profile_id,
     }));
   }
 
