@@ -4,10 +4,10 @@ import { requireProfile } from "@/lib/auth/require-profile";
 import { createClient } from "@/lib/supabase/server";
 import { getConversationsForUser } from "@/lib/messaging/get-conversations";
 
-export default async function MessagesPage() {
-  const { user } = await requireProfile("creator");
+export default async function BrandMessagesPage() {
+  const { user } = await requireProfile("brand");
   const supabase = await createClient();
-  const conversations = await getConversationsForUser(supabase, user.id, "creator");
+  const conversations = await getConversationsForUser(supabase, user.id, "brand");
 
   return (
     <>

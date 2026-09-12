@@ -230,7 +230,16 @@ export interface Database {
     Views: {
       marketplace_creators: { Row: CreatorProfileRow; Relationships: [] };
     };
-    Functions: Record<string, never>;
+    Functions: {
+      create_collaboration_conversation: {
+        Args: { p_collaboration_id: string; p_creator_profile_id: string; p_brand_profile_id: string };
+        Returns: string;
+      };
+      ensure_naanobot_welcome: {
+        Args: { p_creator_profile_id: string };
+        Returns: void;
+      };
+    };
   };
 }
 

@@ -6,6 +6,7 @@ import {
   collaborationActionSchema,
   inviteCreatorSchema,
 } from "@/lib/validations/collaborations";
+import { seedCollaborationConversation } from "@/lib/actions/conversation-helpers";
 
 export interface CollaborationActionResult {
   error?: string;
@@ -50,22 +51,32 @@ export async function applyToCampaignAction(input: unknown): Promise<Collaborati
     .eq("profile_id", campaign.brand_profile_id)
     .maybeSingle();
 
-  const { error } = await supabase.from("collaborations").insert({
-    campaign_id: campaign.id,
-    campaign_title: campaign.title,
-    creator_profile_id: user.id,
-    brand_profile_id: campaign.brand_profile_id,
-    brand_name: brand?.company_name ?? "Brand",
-    brand_logo_url: brand?.logo_url ?? "",
-    status: "applied",
-    agreed_price: campaign.budget,
-    net_payout_to_creator: campaign.budget,
-    next_action_text: "Waiting on brand review",
-  });
+  const { data: inserted, error } = await supabase
+    .from("collaborations")
+    .insert({
+      campaign_id: campaign.id,
+      campaign_title: campaign.title,
+      creator_profile_id: user.id,
+      brand_profile_id: campaign.brand_profile_id,
+      brand_name: brand?.company_name ?? "Brand",
+      brand_logo_url: brand?.logo_url ?? "",
+      status: "applied",
+      agreed_price: campaign.budget,
+      net_payout_to_creator: campaign.budget,
+      next_action_text: "Waiting on brand review",
+    })
+    .select("id")
+    .single();
   if (error) {
     if (error.code === UNIQUE_VIOLATION) return { error: "You've already applied to this campaign." };
     return { error: error.message };
   }
+
+  await seedCollaborationConversation(supabase, {
+    collaborationId: inserted.id,
+    creatorProfileId: user.id,
+    brandProfileId: campaign.brand_profile_id,
+  });
 
   return {};
 }
@@ -96,22 +107,32 @@ export async function inviteCreatorAction(input: unknown): Promise<Collaboration
     .maybeSingle();
   if (existing) return { error: "You've already invited this creator directly." };
 
-  const { error } = await supabase.from("collaborations").insert({
-    campaign_id: null,
-    campaign_title: "Direct outreach",
-    creator_profile_id: parsed.data.creatorProfileId,
-    brand_profile_id: user.id,
-    brand_name: brand.company_name,
-    brand_logo_url: brand.logo_url,
-    status: "needs_action",
-    agreed_price: parsed.data.agreedPrice,
-    net_payout_to_creator: parsed.data.agreedPrice,
-    next_action_text: "Review the offer and confirm the post date",
-  });
+  const { data: inserted, error } = await supabase
+    .from("collaborations")
+    .insert({
+      campaign_id: null,
+      campaign_title: "Direct outreach",
+      creator_profile_id: parsed.data.creatorProfileId,
+      brand_profile_id: user.id,
+      brand_name: brand.company_name,
+      brand_logo_url: brand.logo_url,
+      status: "needs_action",
+      agreed_price: parsed.data.agreedPrice,
+      net_payout_to_creator: parsed.data.agreedPrice,
+      next_action_text: "Review the offer and confirm the post date",
+    })
+    .select("id")
+    .single();
   if (error) {
     if (error.code === UNIQUE_VIOLATION) return { error: "You've already invited this creator directly." };
     return { error: error.message };
   }
+
+  await seedCollaborationConversation(supabase, {
+    collaborationId: inserted.id,
+    creatorProfileId: parsed.data.creatorProfileId,
+    brandProfileId: user.id,
+  });
 
   return {};
 }
