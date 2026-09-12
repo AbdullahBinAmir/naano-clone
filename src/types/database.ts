@@ -208,7 +208,11 @@ export interface Database {
           Partial<Omit<BrandProfileRow, "profile_id" | "company_name" | "created_at">>
       >;
       campaigns: Table<CampaignRow, Omit<CampaignRow, "id" | "created_at" | "status"> & Partial<Pick<CampaignRow, "status">>>;
-      collaborations: Table<CollaborationRow, Omit<CollaborationRow, "id" | "created_at">>;
+      collaborations: Table<
+        CollaborationRow,
+        Omit<CollaborationRow, "id" | "created_at" | "due_date" | "performance_snapshot"> &
+          Partial<Pick<CollaborationRow, "due_date" | "performance_snapshot">>
+      >;
       conversations: Table<ConversationRow, Partial<Omit<ConversationRow, "id" | "created_at">>>;
       conversation_participants: Table<ConversationParticipantRow, ConversationParticipantRow>;
       messages: Table<MessageRow, Omit<MessageRow, "id" | "created_at">>;

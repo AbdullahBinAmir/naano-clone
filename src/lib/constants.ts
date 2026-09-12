@@ -15,6 +15,7 @@ export const BRAND_NAV = [
   { href: "/dashboard/brand/match", label: "Match", icon: "storefront" },
   { href: "/dashboard/brand/briefs", label: "Briefs", icon: "id-card" },
   { href: "/dashboard/brand/campaigns", label: "Campaigns", icon: "layers" },
+  { href: "/dashboard/brand/collaborations", label: "Collaborations", icon: "handshake" },
   { href: "/dashboard/brand/billing", label: "Billing", icon: "wallet" },
 ] as const;
 

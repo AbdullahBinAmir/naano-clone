@@ -4,12 +4,12 @@ import { GlassCard } from "@/components/glass/glass-card";
 import { OpportunitiesList } from "@/components/creator/opportunities-list";
 import { requireProfile } from "@/lib/auth/require-profile";
 import { createClient } from "@/lib/supabase/server";
-import { getDemoOpportunitiesSync } from "@/lib/demo-data/opportunities";
 import { MARKETPLACE_FOLLOWER_THRESHOLD } from "@/lib/constants";
 
 export default async function OpportunitiesPage() {
   const { user } = await requireProfile("creator");
   const supabase = await createClient();
+
   const { data: profileRow } = await supabase
     .from("creator_profiles")
     .select("follower_count")
@@ -18,6 +18,43 @@ export default async function OpportunitiesPage() {
 
   const followerCount = profileRow?.follower_count ?? 0;
   const unlocked = followerCount >= MARKETPLACE_FOLLOWER_THRESHOLD;
+
+  let opportunities: {
+    id: string;
+    title: string;
+    briefText: string;
+    budget: number;
+    targetVertical: string;
+    brandName: string;
+    brandLogoUrl: string;
+  }[] = [];
+
+  if (unlocked) {
+    const [{ data: campaigns }, { data: appliedRows }] = await Promise.all([
+      supabase.from("campaigns").select("*").eq("status", "published").order("created_at", { ascending: false }),
+      supabase.from("collaborations").select("campaign_id").eq("creator_profile_id", user.id),
+    ]);
+
+    const appliedCampaignIds = new Set((appliedRows ?? []).map((r) => r.campaign_id).filter(Boolean));
+    const openCampaigns = (campaigns ?? []).filter((c) => !appliedCampaignIds.has(c.id));
+
+    const brandIds = [...new Set(openCampaigns.map((c) => c.brand_profile_id))];
+    const { data: brands } =
+      brandIds.length > 0
+        ? await supabase.from("brand_profiles").select("profile_id, company_name, logo_url").in("profile_id", brandIds)
+        : { data: [] };
+    const brandById = new Map((brands ?? []).map((b) => [b.profile_id, b]));
+
+    opportunities = openCampaigns.map((c) => ({
+      id: c.id,
+      title: c.title,
+      briefText: c.brief_text,
+      budget: c.budget,
+      targetVertical: c.target_vertical,
+      brandName: brandById.get(c.brand_profile_id)?.company_name ?? "Brand",
+      brandLogoUrl: brandById.get(c.brand_profile_id)?.logo_url ?? "",
+    }));
+  }
 
   return (
     <>
@@ -37,7 +74,7 @@ export default async function OpportunitiesPage() {
           </p>
         </GlassCard>
       ) : (
-        <OpportunitiesList opportunities={getDemoOpportunitiesSync()} />
+        <OpportunitiesList opportunities={opportunities} />
       )}
     </>
   );

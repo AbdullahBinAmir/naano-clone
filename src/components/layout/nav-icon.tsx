@@ -1,6 +1,7 @@
 import {
   BarChart3,
   Grid2x2,
+  Handshake,
   IdCard,
   LayoutList,
   Percent,
@@ -21,6 +22,7 @@ const ICONS: Record<string, LucideIcon> = {
   wallet: Wallet,
   percent: Percent,
   message: MessageCircle,
+  handshake: Handshake,
 };
 
 export function NavIcon({ name, className }: { name: string; className?: string }) {
