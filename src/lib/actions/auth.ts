@@ -1,7 +1,10 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { onboardingSchema, signInSchema, signUpSchema } from "@/lib/validations/auth";
+import { redeemReferralCode } from "@/lib/actions/affiliate-helpers";
+import { REFERRAL_CODE_COOKIE } from "@/lib/constants";
 import type { AppRole } from "@/types/database";
 
 export interface AuthActionResult {
@@ -107,6 +110,13 @@ export async function completeOnboardingAction(input: { role: "creator" | "brand
       company_name: fullName,
     });
     if (brandError) return { error: brandError.message };
+  }
+
+  const cookieStore = await cookies();
+  const referralCode = cookieStore.get(REFERRAL_CODE_COOKIE)?.value;
+  if (referralCode) {
+    await redeemReferralCode(supabase, referralCode);
+    cookieStore.delete(REFERRAL_CODE_COOKIE);
   }
 
   return { role: parsed.data.role };

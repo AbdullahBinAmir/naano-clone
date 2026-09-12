@@ -218,7 +218,11 @@ export interface Database {
       messages: Table<MessageRow, Omit<MessageRow, "id" | "created_at">>;
       earnings_ledger: Table<EarningsLedgerRow, Omit<EarningsLedgerRow, "id" | "created_at">>;
       payout_methods: Table<PayoutMethodRow, Omit<PayoutMethodRow, "id" | "created_at">>;
-      affiliate_referrals: Table<AffiliateReferralRow, Omit<AffiliateReferralRow, "id" | "created_at">>;
+      affiliate_referrals: Table<
+        AffiliateReferralRow,
+        Pick<AffiliateReferralRow, "referrer_profile_id" | "referral_type" | "referral_code"> &
+          Partial<Omit<AffiliateReferralRow, "id" | "created_at" | "referrer_profile_id" | "referral_type" | "referral_code">>
+      >;
       linkedin_analytics_snapshots: Table<
         LinkedinAnalyticsSnapshotRow,
         Omit<LinkedinAnalyticsSnapshotRow, "id" | "captured_at">
@@ -249,6 +253,14 @@ export interface Database {
       };
       request_withdrawal: {
         Args: { p_amount: number };
+        Returns: void;
+      };
+      redeem_referral_code: {
+        Args: { p_code: string };
+        Returns: void;
+      };
+      activate_referrals_for_completed_collaboration: {
+        Args: { p_collaboration_id: string };
         Returns: void;
       };
     };

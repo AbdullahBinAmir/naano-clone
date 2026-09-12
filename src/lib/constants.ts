@@ -1,3 +1,5 @@
+export const REFERRAL_CODE_COOKIE = "naano_referral_code";
+
 export const CREATOR_NAV = [
   { href: "/dashboard/creator/overview", label: "Overview", icon: "grid" },
   { href: "/dashboard/creator/card", label: "My card", icon: "id-card" },

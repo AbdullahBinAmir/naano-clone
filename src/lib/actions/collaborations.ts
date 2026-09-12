@@ -8,6 +8,7 @@ import {
 } from "@/lib/validations/collaborations";
 import { seedCollaborationConversation } from "@/lib/actions/conversation-helpers";
 import { recordCollaborationPayout } from "@/lib/actions/earnings-helpers";
+import { activateReferralsForCompletedCollaboration } from "@/lib/actions/affiliate-helpers";
 
 export interface CollaborationActionResult {
   error?: string;
@@ -200,6 +201,7 @@ export async function updateCollaborationStatusAction(input: unknown): Promise<C
 
   if (nextStatus === "completed") {
     await recordCollaborationPayout(supabase, collab.id);
+    await activateReferralsForCompletedCollaboration(supabase, collab.id);
   }
 
   return {};
