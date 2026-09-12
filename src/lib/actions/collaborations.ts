@@ -7,6 +7,7 @@ import {
   inviteCreatorSchema,
 } from "@/lib/validations/collaborations";
 import { seedCollaborationConversation } from "@/lib/actions/conversation-helpers";
+import { recordCollaborationPayout } from "@/lib/actions/earnings-helpers";
 
 export interface CollaborationActionResult {
   error?: string;
@@ -196,6 +197,10 @@ export async function updateCollaborationStatusAction(input: unknown): Promise<C
     .update({ status: nextStatus, next_action_text: nextActionText })
     .eq("id", collab.id);
   if (error) return { error: error.message };
+
+  if (nextStatus === "completed") {
+    await recordCollaborationPayout(supabase, collab.id);
+  }
 
   return {};
 }

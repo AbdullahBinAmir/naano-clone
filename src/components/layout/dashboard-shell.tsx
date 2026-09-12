@@ -14,16 +14,18 @@ export function DashboardShell({
   role,
   navItems,
   identity,
+  walletBalance,
   children,
 }: {
   role: "creator" | "brand";
   navItems: readonly NavItem[];
   identity: DashboardIdentity;
+  walletBalance?: number;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex min-h-svh flex-col">
-      <Topbar role={role} identity={identity} />
+      <Topbar identity={identity} walletBalance={walletBalance} />
       <div className="mx-auto flex w-full max-w-[100rem] flex-1">
         <aside className="sticky top-16 hidden h-[calc(100svh-4rem)] w-64 shrink-0 overflow-y-auto border-r border-border md:block">
           <Sidebar items={navItems} />

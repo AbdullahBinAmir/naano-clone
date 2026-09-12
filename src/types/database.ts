@@ -239,6 +239,18 @@ export interface Database {
         Args: { p_creator_profile_id: string };
         Returns: void;
       };
+      record_collaboration_payout: {
+        Args: { p_collaboration_id: string };
+        Returns: void;
+      };
+      settle_pending_earnings: {
+        Args: Record<string, never>;
+        Returns: void;
+      };
+      request_withdrawal: {
+        Args: { p_amount: number };
+        Returns: void;
+      };
     };
   };
 }

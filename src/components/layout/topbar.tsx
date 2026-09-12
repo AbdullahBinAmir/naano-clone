@@ -10,8 +10,6 @@ import { toast } from "sonner";
 import { Avatar } from "@/components/ui/avatar";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import { cn, initials } from "@/lib/utils";
-import { DEFAULT_CREATOR } from "@/lib/demo-data";
-import { totals } from "@/lib/demo-data/earnings";
 import { signOutAction } from "@/lib/actions/auth";
 import type { DashboardIdentity } from "@/components/layout/dashboard-shell";
 
@@ -21,16 +19,16 @@ const NOTIFICATIONS = [
   { id: 3, text: "Your card was viewed 12 times this week.", time: "3d" },
 ];
 
-export function Topbar({ role, identity }: { role: "creator" | "brand"; identity: DashboardIdentity }) {
+export function Topbar({
+  identity,
+  walletBalance,
+}: {
+  identity: DashboardIdentity;
+  walletBalance?: number;
+}) {
   const router = useRouter();
   const [locale, setLocale] = React.useState<"en" | "fr">("en");
   const [signingOut, setSigningOut] = React.useState(false);
-
-  // Content pages (Overview, Collaborations, Earnings, ...) aren't migrated
-  // off demo data yet — Phase 3+ per the plan — so the wallet figure here
-  // stays illustrative until that lands. Identity (name/avatar/sign-out)
-  // above this line is real.
-  const walletBalance = role === "creator" ? totals(DEFAULT_CREATOR).available : undefined;
 
   async function handleSignOut() {
     setSigningOut(true);
