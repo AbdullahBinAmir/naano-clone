@@ -2,16 +2,18 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import NumberFlow from "@number-flow/react";
 import { Popover as BasePopover } from "@base-ui-components/react/popover";
-import { Bell, CreditCard, LogOut, UserCog, Wand2 } from "lucide-react";
+import { Bell, CreditCard, LogOut, UserCog } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar } from "@/components/ui/avatar";
-import { Menu, MenuContent, MenuGroup, MenuGroupLabel, MenuItem, MenuTrigger } from "@/components/ui/menu";
+import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import { cn, initials } from "@/lib/utils";
-import { useDemoPersonaStore } from "@/stores/demo-persona-store";
-import { creatorProfiles, brandProfiles, CREATOR_PERSONA_KEYS, type BrandHandleKey } from "@/lib/demo-data";
+import { DEFAULT_CREATOR } from "@/lib/demo-data";
 import { totals } from "@/lib/demo-data/earnings";
+import { signOutAction } from "@/lib/actions/auth";
+import type { DashboardIdentity } from "@/components/layout/dashboard-shell";
 
 const NOTIFICATIONS = [
   { id: 1, text: "Ferngrove confirmed your Outbound playbook booking.", time: "2h" },
@@ -19,12 +21,23 @@ const NOTIFICATIONS = [
   { id: 3, text: "Your card was viewed 12 times this week.", time: "3d" },
 ];
 
-export function Topbar({ role }: { role: "creator" | "brand" }) {
+export function Topbar({ role, identity }: { role: "creator" | "brand"; identity: DashboardIdentity }) {
+  const router = useRouter();
   const [locale, setLocale] = React.useState<"en" | "fr">("en");
-  const { creator, setCreator, brand, setBrand } = useDemoPersonaStore();
+  const [signingOut, setSigningOut] = React.useState(false);
 
-  const displayName = role === "creator" ? creatorProfiles[creator].displayName : brandProfiles[brand].companyName;
-  const walletBalance = role === "creator" ? totals(creator).available : undefined;
+  // Content pages (Overview, Collaborations, Earnings, ...) aren't migrated
+  // off demo data yet — Phase 3+ per the plan — so the wallet figure here
+  // stays illustrative until that lands. Identity (name/avatar/sign-out)
+  // above this line is real.
+  const walletBalance = role === "creator" ? totals(DEFAULT_CREATOR).available : undefined;
+
+  async function handleSignOut() {
+    setSigningOut(true);
+    await signOutAction();
+    router.push("/");
+    router.refresh();
+  }
 
   return (
     <header className="glass-surface-strong sticky top-0 z-30 flex h-16 items-center justify-between gap-4 rounded-none border-x-0 border-t-0 px-4 sm:px-6">
@@ -87,35 +100,21 @@ export function Topbar({ role }: { role: "creator" | "brand" }) {
 
         <Menu>
           <MenuTrigger className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-accent/50">
-            <Avatar src={null} alt={displayName} fallback={initials(displayName)} size="sm" />
+            <Avatar src={identity.avatarUrl} alt={identity.displayName} fallback={initials(identity.displayName)} size="sm" />
           </MenuTrigger>
           <MenuContent>
-            <MenuGroup>
-              <MenuGroupLabel>Preview as (demo)</MenuGroupLabel>
-              {role === "creator"
-                ? CREATOR_PERSONA_KEYS.map((key) => (
-                    <MenuItem key={key} onClick={() => setCreator(key)}>
-                      <Wand2 className="h-3.5 w-3.5" strokeWidth={1.75} />
-                      {creatorProfiles[key].displayName}
-                      {creator === key && <span className="ml-auto text-accent">•</span>}
-                    </MenuItem>
-                  ))
-                : (Object.keys(brandProfiles) as BrandHandleKey[]).map((key) => (
-                    <MenuItem key={key} onClick={() => setBrand(key)}>
-                      <Wand2 className="h-3.5 w-3.5" strokeWidth={1.75} />
-                      {brandProfiles[key].companyName}
-                      {brand === key && <span className="ml-auto text-accent">•</span>}
-                    </MenuItem>
-                  ))}
-            </MenuGroup>
+            <div className="px-2.5 py-1.5">
+              <p className="truncate text-sm font-medium">{identity.displayName}</p>
+              <p className="truncate text-xs text-foreground-subtle">{identity.email}</p>
+            </div>
             <div className="my-1 h-px bg-border" />
             <MenuItem onClick={() => toast("Settings aren't wired up yet.")}>
               <UserCog className="h-3.5 w-3.5" strokeWidth={1.75} />
               Settings
             </MenuItem>
-            <MenuItem onClick={() => toast("Sign-out becomes real once auth is wired.")}>
+            <MenuItem onClick={handleSignOut} disabled={signingOut}>
               <LogOut className="h-3.5 w-3.5" strokeWidth={1.75} />
-              Sign out
+              {signingOut ? "Signing out…" : "Sign out"}
             </MenuItem>
           </MenuContent>
         </Menu>

@@ -4,18 +4,26 @@ import { Sidebar, type NavItem } from "@/components/layout/sidebar";
 import { DashboardAssistant } from "@/components/layout/dashboard-assistant";
 import { MobileNav } from "@/components/layout/mobile-nav";
 
+export interface DashboardIdentity {
+  displayName: string;
+  avatarUrl: string | null;
+  email: string;
+}
+
 export function DashboardShell({
   role,
   navItems,
+  identity,
   children,
 }: {
   role: "creator" | "brand";
   navItems: readonly NavItem[];
+  identity: DashboardIdentity;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex min-h-svh flex-col">
-      <Topbar role={role} />
+      <Topbar role={role} identity={identity} />
       <div className="mx-auto flex w-full max-w-[100rem] flex-1">
         <aside className="sticky top-16 hidden h-[calc(100svh-4rem)] w-64 shrink-0 overflow-y-auto border-r border-border md:block">
           <Sidebar items={navItems} />
