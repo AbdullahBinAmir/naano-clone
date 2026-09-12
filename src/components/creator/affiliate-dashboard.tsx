@@ -88,7 +88,7 @@ function ReferralPanel({
   linkLabel: string;
   pathSegment: string;
 }) {
-  const link = `naano.com/${pathSegment}/${referral.referral_code}`;
+  const link = `https://naano-clone-rust.vercel.app/${pathSegment}/${referral.referral_code}`;
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_1fr]">
@@ -99,7 +99,7 @@ function ReferralPanel({
           variant="primary"
           className="mt-6"
           onClick={() => {
-            navigator.clipboard.writeText(`https://${link}`);
+            navigator.clipboard.writeText(link);
             toast.success("Referral link copied");
           }}
         >
@@ -117,7 +117,7 @@ function ReferralPanel({
           {link}
           <button
             onClick={() => {
-              navigator.clipboard.writeText(`https://${link}`);
+              navigator.clipboard.writeText(link);
               toast.success("Link copied");
             }}
             className="text-foreground-subtle hover:text-foreground"

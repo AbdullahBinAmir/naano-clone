@@ -24,7 +24,7 @@ export function DashboardAssistant({
             label: "Copy my card link",
             onSelect: () => {
               const slug = creatorCards[creator].cardSlug;
-              navigator.clipboard.writeText(`https://naano.com/creators/${slug}`);
+              navigator.clipboard.writeText(`https://naano-clone-rust.vercel.app/creators/${slug}`);
               toast.success("Card link copied");
             },
           },
