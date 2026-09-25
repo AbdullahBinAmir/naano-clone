@@ -19,11 +19,11 @@ export function DataTable<T>({
   emptyState?: React.ReactNode;
 }) {
   if (rows.length === 0 && emptyState) {
-    return <div className="glass-surface rounded-lg px-6 py-16 text-center">{emptyState}</div>;
+    return <div className="rounded-lg border border-border bg-card px-6 py-16 text-center">{emptyState}</div>;
   }
 
   return (
-    <div className="glass-surface overflow-hidden rounded-lg">
+    <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[42rem] border-collapse text-sm">
           <thead>

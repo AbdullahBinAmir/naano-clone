@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { GlassCard } from "@/components/glass/glass-card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { signInAction } from "@/lib/actions/auth";
 
@@ -34,7 +34,7 @@ export default function SignInPage() {
   }
 
   return (
-    <GlassCard strong className="flex flex-col gap-5">
+    <Card tone="raised" className="flex flex-col gap-5">
       <div>
         <h1 className="text-xl font-semibold">Welcome back</h1>
         <p className="mt-1 text-sm text-foreground-muted">Sign in to your Naano workspace.</p>
@@ -66,6 +66,6 @@ export default function SignInPage() {
           Create an account
         </Link>
       </p>
-    </GlassCard>
+    </Card>
   );
 }

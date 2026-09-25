@@ -4,7 +4,7 @@ import * as React from "react";
 import { toast } from "sonner";
 import { Globe2, Lock, Share2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
-import { GlassCard } from "@/components/glass/glass-card";
+import { Card } from "@/components/ui/card";
 import { CreatorCardPreview } from "@/components/creator/creator-card-preview";
 import { Button } from "@/components/ui/button";
 import { updateCreatorCardAction, togglePublishCardAction } from "@/lib/actions/creator-card";
@@ -62,7 +62,7 @@ export function MyCardForm({ profile, card }: { profile: CreatorProfile; card: C
       />
 
       {!unlocked && (
-        <GlassCard className="flex items-center gap-3 border-accent/20">
+        <Card className="flex items-center gap-3 border-accent/20">
           <Lock className="h-4 w-4 shrink-0 text-foreground-subtle" strokeWidth={1.75} />
           <div>
             <p className="font-medium">Not visible on the Marketplace yet</p>
@@ -71,12 +71,12 @@ export function MyCardForm({ profile, card }: { profile: CreatorProfile; card: C
               {MARKETPLACE_FOLLOWER_THRESHOLD.toLocaleString()} followers.
             </p>
           </div>
-        </GlassCard>
+        </Card>
       )}
 
-      <GlassCard className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <span className={`glass-surface flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${draftCard.publishedAt ? "text-success" : "text-foreground-subtle"}`}>
+          <span className={`border border-border bg-card-raised flex h-10 w-10 shrink-0 items-center justify-center rounded-md ${draftCard.publishedAt ? "text-success" : "text-foreground-subtle"}`}>
             <Globe2 className="h-4 w-4" strokeWidth={1.75} />
           </span>
           <div>
@@ -91,9 +91,9 @@ export function MyCardForm({ profile, card }: { profile: CreatorProfile; card: C
         <Button variant={draftCard.publishedAt ? "outline" : "primary"} onClick={handleTogglePublish} disabled={publishing}>
           {publishing ? "Saving…" : draftCard.publishedAt ? "Unpublish" : "Publish card"}
         </Button>
-      </GlassCard>
+      </Card>
 
-      <GlassCard className="border-accent/15 bg-accent-muted/40">
+      <Card className="border-accent/15 bg-accent-muted/40">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-medium tracking-wide text-accent uppercase">Your card is your deal link</p>
@@ -114,10 +114,10 @@ export function MyCardForm({ profile, card }: { profile: CreatorProfile; card: C
             </div>
           </div>
         </div>
-      </GlassCard>
+      </Card>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_1fr]">
-        <GlassCard className="flex flex-col gap-5">
+        <Card className="flex flex-col gap-5">
           <h2 className="text-lg font-semibold">Edit your card</h2>
 
           <Field label="Display name">
@@ -175,7 +175,7 @@ export function MyCardForm({ profile, card }: { profile: CreatorProfile; card: C
               {saving ? "Saving…" : "Save changes"}
             </Button>
           </div>
-        </GlassCard>
+        </Card>
 
         <div className="flex flex-col gap-4">
           <CreatorCardPreview

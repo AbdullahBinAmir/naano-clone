@@ -39,6 +39,11 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
     { header: "Vertical", cell: (row) => <span className="text-foreground-muted">{row.targetVertical}</span> },
     { header: "Status", cell: (row) => <Badge variant={STATUS_VARIANT[row.status]}>{row.status}</Badge> },
     { header: "Budget", cell: (row) => formatCurrency(row.budget) },
+    {
+      header: "Apply by",
+      cell: (row) =>
+        row.deadline ? new Date(`${row.deadline}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }) : <span className="text-foreground-subtle">Open-ended</span>,
+    },
     { header: "Created", cell: (row) => new Date(row.createdAt).toLocaleDateString() },
     {
       header: "",
@@ -65,7 +70,7 @@ export function CampaignsTable({ campaigns }: { campaigns: Campaign[] }) {
 
   return (
     <>
-      <PageHeader eyebrow="Campaigns" title="Campaigns" description="Publish, track, and pay — all from one place." />
+      <PageHeader eyebrow="Campaigns" title="Campaigns" description="Publish, close and review every campaign you've briefed." />
       <DataTable
         columns={columns}
         rows={campaigns}

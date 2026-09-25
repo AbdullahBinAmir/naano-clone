@@ -3,7 +3,7 @@
 import * as React from "react";
 import { toast } from "sonner";
 import { MessageSquare, Search, Send } from "lucide-react";
-import { GlassCard } from "@/components/glass/glass-card";
+import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { createClient } from "@/lib/supabase/client";
 import { sendMessageAction } from "@/lib/actions/messages";
@@ -27,7 +27,13 @@ export function MessagesView({
   );
   const [draft, setDraft] = React.useState("");
   const [sending, setSending] = React.useState(false);
+  const [query, setQuery] = React.useState("");
   const active = conversations.find((c) => c.id === activeId);
+  const visibleConversations = conversations.filter((c) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return c.counterpartName.toLowerCase().includes(q) || (c.messages.at(-1)?.body ?? "").toLowerCase().includes(q);
+  });
 
   // Adjusting state during render (React's documented pattern for "reset
   // state when a prop changes") rather than in an effect: fires when
@@ -138,58 +144,83 @@ export function MessagesView({
   }
 
   return (
-    <GlassCard className="grid grid-cols-1 overflow-hidden p-0 md:grid-cols-[20rem_1fr]" style={{ minHeight: "32rem" }}>
+    <Card padding="none" className="grid grid-cols-1 overflow-hidden md:grid-cols-[21rem_1fr]" style={{ minHeight: "34rem" }}>
       <div className="flex flex-col border-b border-border md:border-r md:border-b-0">
-        <div className="flex items-center gap-2 border-b border-border p-4">
-          <Search className="h-4 w-4 text-foreground-subtle" strokeWidth={1.75} />
-          <input placeholder="Search conversations" className="w-full bg-transparent text-sm outline-none placeholder:text-foreground-subtle" />
+        <div className="p-4">
+          <label className="flex items-center gap-2 rounded-md border border-border-strong bg-card-raised px-3 py-2.5">
+            <Search className="h-4 w-4 text-foreground-subtle" strokeWidth={1.75} />
+            <input
+              aria-label="Search conversations"
+              placeholder="Search conversations"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full bg-transparent text-sm outline-none placeholder:text-foreground-subtle"
+            />
+          </label>
         </div>
-        <div className="flex flex-col overflow-y-auto">
-          {conversations.map((c) => {
+        <div className="flex flex-col gap-1 overflow-y-auto px-2 pb-3">
+          {visibleConversations.map((c) => {
             const last = c.messages[c.messages.length - 1];
             return (
               <button
                 key={c.id}
+                type="button"
                 onClick={() => setActiveId(c.id)}
+                aria-current={activeId === c.id ? "true" : undefined}
                 className={cn(
-                  "flex items-center gap-3 border-b border-border/60 px-4 py-3 text-left transition-colors hover:bg-white/[0.04]",
-                  activeId === c.id && "bg-white/[0.06]",
+                  "flex items-center gap-3 rounded-md px-3 py-3 text-left transition-colors hover:bg-card-raised focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:outline-none",
+                  activeId === c.id && "bg-card-raised",
                 )}
               >
                 <Avatar
                   src={c.isSystem ? null : c.counterpartAvatarUrl}
                   alt={c.counterpartName}
                   fallback={initials(c.counterpartName)}
-                  size="sm"
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{c.counterpartName}</p>
-                  <p className="truncate text-xs text-foreground-subtle">{last?.body ?? "No messages yet"}</p>
+                  <p className="truncate font-medium">{c.counterpartName}</p>
+                  <p className="truncate text-[13px] text-foreground-muted">{last?.body ?? "No messages yet"}</p>
                 </div>
               </button>
             );
           })}
           {conversations.length === 0 && (
             <p className="p-6 text-center text-sm text-foreground-muted">
-              No conversations yet - the thread opens with your first Booking.
+              No conversations yet — start one from Match or Opportunities, or it opens with your first booking.
             </p>
+          )}
+          {conversations.length > 0 && visibleConversations.length === 0 && (
+            <p className="p-6 text-center text-sm text-foreground-muted">No conversations match &ldquo;{query}&rdquo;.</p>
           )}
         </div>
       </div>
 
-      <div className="flex flex-col">
-        <div className="border-b border-border p-4">
-          <p className="font-semibold">Messages</p>
-          <p className="text-xs text-foreground-subtle">{active ? active.counterpartName : "Select a conversation"}</p>
+      <div className="flex min-h-0 flex-col">
+        <div className="flex items-center gap-3 border-b border-border p-4">
+          {active && (
+            <Avatar
+              src={active.isSystem ? null : active.counterpartAvatarUrl}
+              alt={active.counterpartName}
+              fallback={initials(active.counterpartName)}
+            />
+          )}
+          <div>
+            <p className="text-lg font-medium">{active ? active.counterpartName : "Messages"}</p>
+            <p className="text-[13px] text-foreground-muted">{active ? (active.isSystem ? "Automated updates" : "Conversation") : "Select a conversation"}</p>
+          </div>
         </div>
-        <div className="flex-1 space-y-4 overflow-y-auto p-4">
+        <div className="flex-1 space-y-3 overflow-y-auto p-4" aria-live="polite">
           {active ? (
             active.messages.map((m) => (
               <div key={m.id} className={cn("flex", m.senderIsSelf && "justify-end")}>
                 <div
                   className={cn(
-                    "max-w-[80%] rounded-lg px-3.5 py-2.5 text-sm",
-                    m.senderIsSelf ? "bg-accent text-accent-foreground" : "glass-surface",
+                    "max-w-[80%] rounded-lg px-4 py-2.5 text-sm",
+                    m.senderIsSelf
+                      ? "bg-accent text-accent-foreground"
+                      : m.isSystem
+                        ? "border border-dashed border-border-strong bg-transparent text-foreground-muted"
+                        : "bg-card-raised",
                   )}
                 >
                   {m.body}
@@ -199,13 +230,14 @@ export function MessagesView({
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 text-foreground-muted">
               <MessageSquare className="h-6 w-6 text-foreground-subtle" strokeWidth={1.5} />
-              No conversations yet.
+              No conversation selected.
             </div>
           )}
         </div>
         <form onSubmit={handleSend} className="flex items-center gap-2 border-t border-border p-4">
           <input
             className="input"
+            aria-label="Message"
             placeholder="Write a message…"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -215,12 +247,12 @@ export function MessagesView({
             type="submit"
             aria-label="Send message"
             disabled={!active || !draft.trim() || sending}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground disabled:opacity-40"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground transition-[filter] hover:brightness-110 focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:outline-none disabled:opacity-40"
           >
             <Send className="h-4 w-4" strokeWidth={1.75} />
           </button>
         </form>
       </div>
-    </GlassCard>
+    </Card>
   );
 }

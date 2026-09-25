@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { GlassCard } from "@/components/glass/glass-card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { signUpAction } from "@/lib/actions/auth";
 
@@ -36,7 +36,7 @@ export default function SignUpPage() {
 
   if (checkEmail) {
     return (
-      <GlassCard strong className="flex flex-col gap-3 text-center">
+      <Card tone="raised" className="flex flex-col gap-3 text-center">
         <h1 className="text-xl font-semibold">Check your email</h1>
         <p className="text-sm text-foreground-muted">
           We sent a confirmation link to <span className="text-foreground">{email}</span>. Click it, then come back
@@ -45,12 +45,12 @@ export default function SignUpPage() {
         <Link href="/sign-in" className="mt-2 text-sm text-accent hover:underline">
           Back to sign in
         </Link>
-      </GlassCard>
+      </Card>
     );
   }
 
   return (
-    <GlassCard strong className="flex flex-col gap-5">
+    <Card tone="raised" className="flex flex-col gap-5">
       <div>
         <h1 className="text-xl font-semibold">Create your account</h1>
         <p className="mt-1 text-sm text-foreground-muted">Start as a creator or a brand — you can switch later.</p>
@@ -90,6 +90,6 @@ export default function SignUpPage() {
           Sign in
         </Link>
       </p>
-    </GlassCard>
+    </Card>
   );
 }

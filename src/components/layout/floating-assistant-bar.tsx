@@ -67,7 +67,7 @@ export function FloatingAssistantBar({
       <div className="pointer-events-none fixed inset-x-0 bottom-6 z-40 flex justify-center px-4">
         <motion.button
           onClick={() => setOpen(true)}
-          className="glass-surface-strong pointer-events-auto flex items-center gap-2 rounded-full px-5 py-3 text-sm text-foreground-muted transition-colors hover:text-foreground"
+          className="border border-border bg-card-raised pointer-events-auto flex items-center gap-2 rounded-full px-5 py-3 text-sm text-foreground-muted transition-colors hover:text-foreground"
           whileTap={{ scale: 0.97 }}
           transition={{ type: "spring", bounce: 0, duration: 0.3 }}
         >
@@ -85,11 +85,11 @@ export function FloatingAssistantBar({
         label="Naano assistant"
         shouldFilter={!answer}
         overlayClassName={cn(
-          "fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-200",
+          "fixed inset-0 z-40 bg-black/60 transition-opacity duration-200",
           "data-[state=closed]:opacity-0 data-[state=open]:opacity-100",
         )}
         contentClassName={cn(
-          "glass-surface-strong fixed top-[18%] left-1/2 z-50 w-[min(34rem,92vw)] -translate-x-1/2 overflow-hidden rounded-xl outline-none",
+          "border border-border bg-card-raised fixed top-[18%] left-1/2 z-50 w-[min(34rem,92vw)] -translate-x-1/2 overflow-hidden rounded-xl outline-none",
           "transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
           "data-[state=closed]:scale-95 data-[state=closed]:opacity-0 data-[state=open]:scale-100 data-[state=open]:opacity-100",
         )}

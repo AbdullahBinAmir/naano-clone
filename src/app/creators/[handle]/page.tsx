@@ -4,7 +4,7 @@ import Link from "next/link";
 import { MapPin, ExternalLink } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { GlassCard } from "@/components/glass/glass-card";
+import { Card } from "@/components/ui/card";
 import { BookPostButton } from "@/components/creator/book-post-button";
 import { LogCardVisit } from "@/components/creator/log-card-visit";
 import { getDemoCreatorByHandle } from "@/lib/demo-data";
@@ -180,13 +180,13 @@ export default async function PublicCreatorCardPage({ params }: { params: Promis
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[1.3fr_1fr]">
         <div className="flex flex-col gap-6">
-          <GlassCard>
+          <Card>
             <h2 className="text-lg font-semibold">About</h2>
             <p className="mt-2 text-foreground-muted">{profile.bio || "This creator hasn't added a bio yet."}</p>
-          </GlassCard>
+          </Card>
 
           {seniority.length > 0 && (
-            <GlassCard>
+            <Card>
               <h2 className="text-lg font-semibold">Audience seniority</h2>
               <div className="mt-4 flex flex-col gap-3">
                 {seniority.map((s) => (
@@ -201,10 +201,10 @@ export default async function PublicCreatorCardPage({ params }: { params: Promis
                   </div>
                 ))}
               </div>
-            </GlassCard>
+            </Card>
           )}
 
-          <GlassCard>
+          <Card>
             <h2 className="text-lg font-semibold">Sample posts</h2>
             {posts.length === 0 ? (
               <p className="mt-2 text-sm text-foreground-muted">No public posts collected yet.</p>
@@ -216,7 +216,7 @@ export default async function PublicCreatorCardPage({ params }: { params: Promis
                     href={post.originalPostUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="glass-surface flex items-center justify-between gap-2 rounded-lg px-4 py-3 text-sm transition-colors hover:text-foreground"
+                    className="border border-border bg-card-raised flex items-center justify-between gap-2 rounded-lg px-4 py-3 text-sm transition-colors hover:text-foreground"
                   >
                     <span className="truncate text-foreground-muted">{new Date(post.postedAt).toLocaleDateString()}</span>
                     <ExternalLink className="h-3.5 w-3.5 shrink-0 text-foreground-subtle" strokeWidth={1.75} />
@@ -224,11 +224,11 @@ export default async function PublicCreatorCardPage({ params }: { params: Promis
                 ))}
               </div>
             )}
-          </GlassCard>
+          </Card>
         </div>
 
         <div className="flex flex-col gap-4">
-          <GlassCard strong className="flex flex-col gap-4">
+          <Card tone="raised" className="flex flex-col gap-4">
             <div className="grid grid-cols-3 gap-2 text-center">
               <div>
                 <p className="text-xl font-semibold">{formatCompactNumber(profile.followerCount)}</p>
@@ -250,7 +250,7 @@ export default async function PublicCreatorCardPage({ params }: { params: Promis
               <p className="text-sm text-foreground-subtle">per sponsored post</p>
             </div>
             <BookPostButton creatorName={profile.displayName} />
-          </GlassCard>
+          </Card>
         </div>
       </div>
     </div>

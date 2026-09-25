@@ -18,7 +18,7 @@ export function CreatorCardPreview({
   footer?: React.ReactNode;
 }) {
   return (
-    <div className="glass-surface-strong overflow-hidden rounded-xl">
+    <div className="border border-border bg-card-raised overflow-hidden rounded-xl">
       <div className="relative h-28 w-full bg-gradient-to-br from-accent/25 via-surface-2 to-surface-1">
         {card.bannerUrl && (
           <Image

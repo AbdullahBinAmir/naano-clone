@@ -60,6 +60,7 @@ export interface Campaign {
   budget: number;
   targetVertical: string;
   status: CampaignStatus;
+  deadline?: string | null;
   createdAt: string;
 }
 

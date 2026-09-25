@@ -4,8 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { MapPin, MessageSquare, Search } from "lucide-react";
-import { PageHeader } from "@/components/layout/page-header";
-import { GlassCard } from "@/components/glass/glass-card";
+import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -62,14 +61,8 @@ export function MatchGrid({ creators }: { creators: MatchCreator[] }) {
 
   return (
     <>
-      <PageHeader
-        eyebrow="Match"
-        title="Find creators your buyers already trust"
-        description="Filter by vertical or ICP to see who's a fit — invite them, they accept, and the booking runs on Naano."
-      />
-
-      <GlassCard className="flex flex-wrap items-center gap-3">
-        <div className="flex flex-1 items-center gap-2 rounded-md border border-border-strong bg-white/[0.04] px-3 py-2">
+      <Card padding="sm" className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-1 items-center gap-2 rounded-md border border-border-strong bg-card-raised px-3 py-2.5">
           <Search className="h-4 w-4 text-foreground-subtle" strokeWidth={1.75} />
           <input
             className="w-full bg-transparent text-sm outline-none placeholder:text-foreground-subtle"
@@ -78,14 +71,14 @@ export function MatchGrid({ creators }: { creators: MatchCreator[] }) {
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        <Button variant="glass" onClick={() => setQuery("")}>
+        <Button variant="outline" onClick={() => setQuery("")}>
           Clear
         </Button>
-      </GlassCard>
+      </Card>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {filtered.map((c) => (
-          <GlassCard key={c.profileId} className="flex flex-col gap-3">
+          <Card key={c.profileId} className="flex flex-col gap-3">
             <div className="flex items-center gap-3">
               <Avatar src={c.avatarUrl} alt={c.displayName} fallback={initials(c.displayName)} />
               <div className="min-w-0">
@@ -111,7 +104,7 @@ export function MatchGrid({ creators }: { creators: MatchCreator[] }) {
               <div className="flex gap-1.5">
                 <Button
                   size="sm"
-                  variant="glass"
+                  variant="outline"
                   onClick={() => handleMessage(c)}
                   disabled={messagingId === c.profileId}
                   aria-label={`Message ${c.displayName}`}
@@ -123,7 +116,7 @@ export function MatchGrid({ creators }: { creators: MatchCreator[] }) {
                 </Button>
               </div>
             </div>
-          </GlassCard>
+          </Card>
         ))}
         {filtered.length === 0 && (
           <p className="col-span-full py-12 text-center text-foreground-muted">

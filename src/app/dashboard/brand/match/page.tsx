@@ -1,13 +1,17 @@
 import { requireProfile } from "@/lib/auth/require-profile";
 import { createClient } from "@/lib/supabase/server";
-import { MatchGrid } from "@/components/brand/match-grid";
+import { MatchWorkspace } from "@/components/brand/match-workspace";
+import { getPitches } from "@/lib/brand/get-pitches";
 import type { CreatorCardRow, CreatorProfileRow } from "@/types/database";
 
 export default async function MatchPage() {
-  await requireProfile("brand");
+  const { user } = await requireProfile("brand");
   const supabase = await createClient();
 
-  const { data: creators } = await supabase.from("marketplace_creators").select("*");
+  const [{ data: creators }, pitches] = await Promise.all([
+    supabase.from("marketplace_creators").select("*"),
+    getPitches(supabase, user.id),
+  ]);
   const profileIds = (creators ?? []).map((c) => c.profile_id);
 
   const { data: cards } =
@@ -32,5 +36,5 @@ export default async function MatchPage() {
     })
     .filter((c): c is NonNullable<typeof c> => c !== null);
 
-  return <MatchGrid creators={matchingCreators} />;
+  return <MatchWorkspace pitches={pitches} creators={matchingCreators} />;
 }

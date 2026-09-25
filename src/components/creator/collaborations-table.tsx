@@ -84,7 +84,7 @@ export function CollaborationsTable({
       header: counterpartLabel,
       cell: (row) => (
         <div className="flex items-center gap-2">
-          <span className="glass-surface relative h-7 w-7 shrink-0 overflow-hidden rounded-md">
+          <span className="border border-border bg-card-raised relative h-7 w-7 shrink-0 overflow-hidden rounded-md">
             {row.counterpartLogoUrl && (
               <Image src={row.counterpartLogoUrl} alt="" fill sizes="28px" className="object-contain p-1" />
             )}

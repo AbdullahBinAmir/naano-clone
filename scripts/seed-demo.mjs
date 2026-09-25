@@ -266,7 +266,7 @@ async function seedConversation(creatorKey, brandKey, collaborationId) {
 
 // action: "apply" (creator-initiated, needs a published campaign) or
 // "invite" (brand-initiated direct outreach, campaign_id null)
-async function ensureCollaboration({ creatorKey, brandKey, action, campaignKey, agreedPrice, advanceTo }) {
+async function ensureCollaboration({ creatorKey, brandKey, action, campaignKey, agreedPrice, advanceTo, dueInDays }) {
   const creator = people[creatorKey];
   const brand = people[brandKey];
   const campaignId = campaignKey ? campaignIds[campaignKey] : null;
@@ -290,6 +290,7 @@ async function ensureCollaboration({ creatorKey, brandKey, action, campaignKey, 
         agreed_price: price,
         net_payout_to_creator: price,
         next_action_text: action === "apply" ? "Waiting on brand review" : "Review the offer and confirm the post date",
+        due_date: dueInDays ? new Date(Date.now() + dueInDays * 86_400_000).toISOString().slice(0, 10) : null,
       })
       .select("id, status")
       .single();
@@ -499,6 +500,7 @@ async function main() {
     action: "invite",
     agreedPrice: 900,
     advanceTo: "active",
+    dueInDays: 6,
   });
   await ensureCollaboration({
     creatorKey: "juliette",
@@ -520,6 +522,7 @@ async function main() {
     action: "invite",
     agreedPrice: 500,
     advanceTo: "needs_action",
+    dueInDays: 3,
   });
   const alexisSecondCompletedId = await ensureCollaboration({
     creatorKey: "alexis",

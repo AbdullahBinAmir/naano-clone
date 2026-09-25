@@ -17,6 +17,10 @@ export async function createCampaignAction(input: unknown): Promise<CampaignActi
   } = await supabase.auth.getUser();
   if (!user) return { error: "You need to sign in first." };
 
+  if (parsed.data.deadline && parsed.data.deadline < new Date().toISOString().slice(0, 10)) {
+    return { error: "The apply-by date can't be in the past." };
+  }
+
   const { error } = await supabase.from("campaigns").insert({
     brand_profile_id: user.id,
     title: parsed.data.title,
@@ -24,6 +28,8 @@ export async function createCampaignAction(input: unknown): Promise<CampaignActi
     budget: parsed.data.budget,
     target_vertical: parsed.data.targetVertical,
     status: "draft",
+    // Only sent when set, so a project without the deadline column still works.
+    ...(parsed.data.deadline ? { deadline: parsed.data.deadline } : {}),
   });
   if (error) return { error: error.message };
 

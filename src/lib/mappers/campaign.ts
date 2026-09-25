@@ -10,6 +10,7 @@ export function rowToCampaign(row: CampaignRow): Campaign {
     budget: row.budget,
     targetVertical: row.target_vertical,
     status: row.status,
+    deadline: row.deadline ?? null,
     createdAt: row.created_at,
   };
 }

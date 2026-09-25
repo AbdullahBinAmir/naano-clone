@@ -77,6 +77,8 @@ export type CampaignRow = {
   budget: number;
   target_vertical: string;
   status: CampaignStatus;
+  /** Optional "apply by" date (YYYY-MM-DD); null = open-ended. */
+  deadline: string | null;
   created_at: string;
 }
 
@@ -207,7 +209,10 @@ export interface Database {
         Pick<BrandProfileRow, "profile_id" | "company_name"> &
           Partial<Omit<BrandProfileRow, "profile_id" | "company_name" | "created_at">>
       >;
-      campaigns: Table<CampaignRow, Omit<CampaignRow, "id" | "created_at" | "status"> & Partial<Pick<CampaignRow, "status">>>;
+      campaigns: Table<
+        CampaignRow,
+        Omit<CampaignRow, "id" | "created_at" | "status" | "deadline"> & Partial<Pick<CampaignRow, "status" | "deadline">>
+      >;
       collaborations: Table<
         CollaborationRow,
         Omit<CollaborationRow, "id" | "created_at" | "due_date" | "performance_snapshot"> &

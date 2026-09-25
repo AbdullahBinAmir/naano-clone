@@ -22,7 +22,7 @@ export function Tooltip({
         <BaseTooltip.Positioner side={side} sideOffset={8}>
           <BaseTooltip.Popup
             className={cn(
-              "glass-surface-strong z-50 rounded-md px-2.5 py-1.5 text-xs font-medium text-foreground",
+              "border border-border bg-card-raised z-50 rounded-md px-2.5 py-1.5 text-xs font-medium text-foreground",
               "data-[starting-style]:opacity-0 data-[ending-style]:opacity-0 transition-opacity duration-150",
             )}
           >

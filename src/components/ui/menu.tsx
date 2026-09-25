@@ -22,7 +22,7 @@ export function MenuContent({
       <BaseMenu.Positioner sideOffset={8} align={align}>
         <BaseMenu.Popup
           className={cn(
-            "glass-surface-strong z-50 min-w-[14rem] rounded-lg p-1.5 outline-none",
+            "z-50 min-w-[14rem] rounded-lg border border-border bg-card-raised p-1.5 outline-none",
             "data-[starting-style]:opacity-0 data-[starting-style]:scale-95 data-[ending-style]:opacity-0 data-[ending-style]:scale-95 transition-all duration-150",
             className,
           )}

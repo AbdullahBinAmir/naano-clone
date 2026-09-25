@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
-import { GlassCard } from "@/components/glass/glass-card";
+import { Card } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 
 const PLANS = [
@@ -35,7 +35,7 @@ export default function PricingPage() {
 
         <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2">
           {PLANS.map((plan) => (
-            <GlassCard key={plan.name} strong={plan.featured} className={plan.featured ? "border-accent/40" : undefined}>
+            <Card key={plan.name} padding="lg" tone={plan.featured ? "raised" : "default"} className={plan.featured ? "ring-2 ring-accent" : undefined}>
               <h2 className="text-xl font-semibold">{plan.name}</h2>
               <p className="mt-4 flex items-baseline gap-1">
                 <span className="text-4xl font-semibold">{plan.price}</span>
@@ -52,11 +52,11 @@ export default function PricingPage() {
               </ul>
               <Link
                 href="/sign-up"
-                className={buttonVariants({ variant: plan.featured ? "primary" : "glass", size: "md", className: "mt-8 w-full" })}
+                className={buttonVariants({ variant: plan.featured ? "primary" : "outline", size: "md", className: "mt-8 w-full" })}
               >
                 Get started
               </Link>
-            </GlassCard>
+            </Card>
           ))}
         </div>
       </section>

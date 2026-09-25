@@ -1,8 +1,21 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, EarningsLedgerRow, PayoutMethodRow } from "@/types/database";
 
+export interface StatementLine {
+  id: string;
+  date: string;
+  type: EarningsLedgerRow["type"];
+  status: EarningsLedgerRow["status"];
+  amount: number;
+  /** What the money was for, e.g. the campaign title; falls back to the entry type. */
+  description: string;
+  /** Brand that paid, when the entry is tied to a collaboration. */
+  counterparty: string | null;
+}
+
 export interface EarningsSummary {
   entries: EarningsLedgerRow[];
+  statement: StatementLine[];
   payoutMethods: PayoutMethodRow[];
   monthly: { month: string; amount: number }[];
   totals: {
@@ -40,6 +53,30 @@ export async function getEarningsSummaryForCreator(
   ]);
 
   const rows = entries ?? [];
+
+  const collabIds = [...new Set(rows.map((r) => r.collaboration_id).filter((id): id is string => !!id))];
+  const { data: collabs } =
+    collabIds.length > 0
+      ? await supabase.from("collaborations").select("id, campaign_title, brand_name").in("id", collabIds)
+      : { data: [] as { id: string; campaign_title: string; brand_name: string }[] };
+  const collabById = new Map((collabs ?? []).map((c) => [c.id, c]));
+  const TYPE_LABEL: Record<EarningsLedgerRow["type"], string> = {
+    collaboration_payout: "Collaboration payout",
+    affiliate_reward: "Affiliate reward",
+    referral_bonus: "Referral bonus",
+  };
+  const statement: StatementLine[] = rows.map((r) => {
+    const c = r.collaboration_id ? collabById.get(r.collaboration_id) : undefined;
+    return {
+      id: r.id,
+      date: r.created_at,
+      type: r.type,
+      status: r.status,
+      amount: Number(r.amount),
+      description: c?.campaign_title || TYPE_LABEL[r.type],
+      counterparty: c?.brand_name || null,
+    };
+  });
   const sumByStatus = (status: EarningsLedgerRow["status"]) =>
     rows.filter((e) => e.status === status).reduce((acc, e) => acc + Number(e.amount), 0);
 
@@ -57,6 +94,7 @@ export async function getEarningsSummaryForCreator(
 
   return {
     entries: rows,
+    statement,
     payoutMethods: payoutMethods ?? [],
     monthly: monthBuckets.map(({ month, amount }) => ({ month, amount })),
     totals: {

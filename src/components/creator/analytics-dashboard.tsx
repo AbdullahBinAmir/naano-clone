@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Activity, ExternalLink, Eye, FileText, Upload, Users } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
-import { GlassCard } from "@/components/glass/glass-card";
+import { Card } from "@/components/ui/card";
 import { StatTile } from "@/components/creator/stat-tile";
 import { ReachChart } from "@/components/charts/reach-chart";
 import { Button } from "@/components/ui/button";
@@ -122,7 +122,7 @@ export function AnalyticsDashboard({
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <GlassCard>
+        <Card>
           <h2 className="mb-1 text-lg font-semibold">Update your stats</h2>
           <p className="mb-4 text-sm text-foreground-muted">
             Saving creates a new snapshot, so your trend chart builds up over time.
@@ -160,9 +160,9 @@ export function AnalyticsDashboard({
               {saving ? "Saving…" : "Save snapshot"}
             </Button>
           </div>
-        </GlassCard>
+        </Card>
 
-        <GlassCard className="flex flex-col gap-3">
+        <Card className="flex flex-col gap-3">
           <h2 className="text-lg font-semibold">Import posts from a CSV</h2>
           <p className="text-sm text-foreground-muted">
             Columns: <code className="text-foreground">post_url, posted_at, reach, engagements</code> (reach/engagements
@@ -178,11 +178,11 @@ export function AnalyticsDashboard({
             <Upload className="h-3.5 w-3.5" strokeWidth={1.75} />
             {uploading ? "Importing…" : "Import CSV"}
           </Button>
-        </GlassCard>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <GlassCard>
+        <Card>
           <h2 className="mb-4 text-lg font-semibold">Recent LinkedIn posts</h2>
           {posts.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-10 text-center text-foreground-muted">
@@ -218,9 +218,9 @@ export function AnalyticsDashboard({
               Save a couple more snapshots over time to see a trend chart here.
             </p>
           )}
-        </GlassCard>
+        </Card>
 
-        <GlassCard className="flex flex-col gap-4">
+        <Card className="flex flex-col gap-4">
           <h2 className="text-lg font-semibold">Public profile summary</h2>
           <p className="text-sm text-foreground-muted">From your most recently saved snapshot.</p>
           {[
@@ -237,7 +237,7 @@ export function AnalyticsDashboard({
               <span className="font-medium tabular-nums">{formatCompactNumber(Number(value))}</span>
             </div>
           ))}
-        </GlassCard>
+        </Card>
       </div>
     </>
   );

@@ -5,6 +5,11 @@ export const createCampaignSchema = z.object({
   briefText: z.string().trim().max(2000),
   budget: z.number().nonnegative().max(1_000_000),
   targetVertical: z.string().trim().max(200),
+  deadline: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Use a valid date")
+    .nullable()
+    .optional(),
 });
 
 export const campaignStatusSchema = z.object({

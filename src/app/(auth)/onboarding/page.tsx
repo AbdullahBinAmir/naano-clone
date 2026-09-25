@@ -4,7 +4,6 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Building2, Sparkles } from "lucide-react";
-import { GlassCard } from "@/components/glass/glass-card";
 import { completeOnboardingAction } from "@/lib/actions/auth";
 import { cn } from "@/lib/utils";
 
@@ -49,20 +48,25 @@ export default function OnboardingPage() {
       </div>
       <div className="flex flex-col gap-4">
         {ROLES.map((r) => (
-          <GlassCard
+          <button
             key={r.role}
-            interactive={pending === null}
-            className={cn("flex items-center gap-4", pending && pending !== r.role && "opacity-50")}
-            onClick={() => pending === null && choose(r.role, r.href)}
+            type="button"
+            disabled={pending !== null}
+            onClick={() => choose(r.role, r.href)}
+            className={cn(
+              "flex w-full items-center gap-4 rounded-lg border border-border bg-card p-6 text-left transition-colors hover:bg-card-raised focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:outline-none disabled:cursor-default",
+              pending !== null && pending !== r.role && "opacity-50",
+              pending === r.role && "bg-card-raised ring-2 ring-accent",
+            )}
           >
-            <span className="glass-surface flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-accent">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border bg-card-raised text-accent">
               <r.icon className="h-5 w-5" strokeWidth={1.75} />
             </span>
-            <div>
-              <p className="font-semibold">{pending === r.role ? "Setting up…" : r.title}</p>
-              <p className="text-sm text-foreground-muted">{r.description}</p>
-            </div>
-          </GlassCard>
+            <span>
+              <span className="block font-medium">{pending === r.role ? "Setting up…" : r.title}</span>
+              <span className="block text-sm text-foreground-muted">{r.description}</span>
+            </span>
+          </button>
         ))}
       </div>
     </div>

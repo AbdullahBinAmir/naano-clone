@@ -33,11 +33,14 @@ export async function applyToCampaignAction(input: unknown): Promise<Collaborati
 
   const { data: campaign, error: campaignError } = await supabase
     .from("campaigns")
-    .select("id, title, budget, brand_profile_id, status")
+    .select("*")
     .eq("id", parsed.data.campaignId)
     .maybeSingle();
   if (campaignError) return { error: campaignError.message };
   if (!campaign || campaign.status !== "published") return { error: "This campaign isn't open for applications." };
+  if (campaign.deadline && campaign.deadline < new Date().toISOString().slice(0, 10)) {
+    return { error: "The apply-by date for this campaign has passed." };
+  }
 
   const { data: existing } = await supabase
     .from("collaborations")

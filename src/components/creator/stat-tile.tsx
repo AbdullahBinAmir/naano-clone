@@ -1,6 +1,6 @@
 import * as React from "react";
 import NumberFlow, { type Format } from "@number-flow/react";
-import { GlassCard } from "@/components/glass/glass-card";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export function StatTile({
@@ -25,7 +25,7 @@ export function StatTile({
   className?: string;
 }) {
   return (
-    <GlassCard className={cn("flex flex-col gap-3", className)}>
+    <Card className={cn("flex flex-col gap-3", className)}>
       <div className="flex items-center gap-2 text-xs font-medium tracking-wide text-foreground-subtle uppercase">
         <span className="text-foreground-muted">{icon}</span>
         {label}
@@ -38,6 +38,6 @@ export function StatTile({
         )}
       </div>
       <p className="text-sm text-foreground-muted">{caption}</p>
-    </GlassCard>
+    </Card>
   );
 }

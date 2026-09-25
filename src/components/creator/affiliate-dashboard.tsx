@@ -3,7 +3,7 @@
 import { toast } from "sonner";
 import { Building2, Copy, UserPlus } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
-import { GlassCard } from "@/components/glass/glass-card";
+import { Card } from "@/components/ui/card";
 import { Tabs, TabsIndicator, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import type { AffiliateReferralRow } from "@/types/database";
@@ -108,12 +108,12 @@ function ReferralPanel({
         </Button>
       </div>
 
-      <GlassCard strong className="flex flex-col gap-4">
+      <Card tone="raised" className="flex flex-col gap-4">
         <div>
           <p className="text-xs font-medium tracking-wide text-foreground-subtle uppercase">Your invite link</p>
           <p className="mt-1 text-sm text-foreground-muted">Every signup is attributed automatically</p>
         </div>
-        <div className="glass-surface flex items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-sm text-accent">
+        <div className="border border-border bg-card-raised flex items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-sm text-accent">
           {link}
           <button
             onClick={() => {
@@ -126,17 +126,17 @@ function ReferralPanel({
           </button>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div className="glass-surface rounded-lg p-3">
+          <div className="border border-border bg-card-raised rounded-lg p-3">
             <p className="text-xs text-foreground-subtle">Your share</p>
             <p className="text-xl font-semibold">25%</p>
           </div>
-          <div className="glass-surface rounded-lg p-3">
+          <div className="border border-border bg-card-raised rounded-lg p-3">
             <p className="text-xs text-foreground-subtle">Reward window</p>
             <p className="text-xl font-semibold">3 months</p>
           </div>
         </div>
         <p className="text-xs text-foreground-subtle">{statusLine(referral)}</p>
-      </GlassCard>
+      </Card>
     </div>
   );
 }

@@ -15,10 +15,10 @@ export function DialogContent({
 }: React.ComponentPropsWithoutRef<typeof BaseDialog.Popup>) {
   return (
     <BaseDialog.Portal>
-      <BaseDialog.Backdrop className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-200 data-[starting-style]:opacity-0 data-[ending-style]:opacity-0" />
+      <BaseDialog.Backdrop className="fixed inset-0 z-40 bg-black/60 transition-opacity duration-200 data-[starting-style]:opacity-0 data-[ending-style]:opacity-0" />
       <BaseDialog.Popup
         className={cn(
-          "glass-surface-strong fixed top-1/2 left-1/2 z-50 w-[min(28rem,92vw)] -translate-x-1/2 -translate-y-1/2 rounded-xl p-6 outline-none transition-all duration-200",
+          "border border-border bg-card-raised fixed top-1/2 left-1/2 z-50 w-[min(28rem,92vw)] -translate-x-1/2 -translate-y-1/2 rounded-xl p-6 outline-none transition-all duration-200",
           "data-[starting-style]:opacity-0 data-[starting-style]:scale-95 data-[ending-style]:opacity-0 data-[ending-style]:scale-95",
           className,
         )}
@@ -31,7 +31,7 @@ export function DialogContent({
 }
 
 export function DialogTitle({ className, ...props }: React.ComponentPropsWithoutRef<typeof BaseDialog.Title>) {
-  return <BaseDialog.Title className={cn("text-base font-semibold text-foreground", className)} {...props} />;
+  return <BaseDialog.Title className={cn("text-[length:1rem] font-semibold text-foreground", className)} {...props} />;
 }
 
 export function DialogDescription({
