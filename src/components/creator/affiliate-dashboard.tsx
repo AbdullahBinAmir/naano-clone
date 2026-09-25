@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsIndicator, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { useOrigin } from "@/hooks/use-origin";
 import type { AffiliateReferralRow } from "@/types/database";
 
 export function AffiliateDashboard({
@@ -88,7 +89,8 @@ function ReferralPanel({
   linkLabel: string;
   pathSegment: string;
 }) {
-  const link = `https://naano-clone-rust.vercel.app/${pathSegment}/${referral.referral_code}`;
+  const origin = useOrigin();
+  const link = `${origin}/${pathSegment}/${referral.referral_code}`;
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_1fr]">

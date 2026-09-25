@@ -17,6 +17,7 @@ export function DashboardShell({
   identity,
   stats,
   walletBalance,
+  publicCardHandle,
   children,
 }: {
   role: "creator" | "brand";
@@ -24,6 +25,8 @@ export function DashboardShell({
   identity: DashboardIdentity;
   stats: CollabStats;
   walletBalance?: number;
+  /** Creator only: handle of their published card, or null if not published yet. */
+  publicCardHandle?: string | null;
   children: React.ReactNode;
 }) {
   const collaborationsHref = `/dashboard/${role}/collaborations`;
@@ -52,7 +55,7 @@ export function DashboardShell({
           <div className="mx-auto flex max-w-6xl flex-col gap-8">{children}</div>
         </main>
       </div>
-      <DashboardAssistant role={role} navItems={navItems} />
+      <DashboardAssistant role={role} navItems={navItems} publicCardHandle={publicCardHandle ?? null} />
     </div>
   );
 }

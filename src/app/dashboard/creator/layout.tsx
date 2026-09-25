@@ -9,8 +9,9 @@ export default async function CreatorDashboardLayout({ children }: { children: R
   const { user, profile } = await requireProfile("creator");
 
   const supabase = await createClient();
-  const [{ data: creatorProfile }, { data: available }, stats] = await Promise.all([
-    supabase.from("creator_profiles").select("display_name, avatar_url").eq("profile_id", user.id).maybeSingle(),
+  const [{ data: creatorProfile }, { data: card }, { data: available }, stats] = await Promise.all([
+    supabase.from("creator_profiles").select("display_name, avatar_url, handle").eq("profile_id", user.id).maybeSingle(),
+    supabase.from("creator_cards").select("published_at").eq("creator_profile_id", user.id).maybeSingle(),
     supabase.from("earnings_ledger").select("amount").eq("creator_profile_id", user.id).eq("status", "available"),
     getCollabStats(supabase, user.id, "creator"),
   ]);
@@ -20,10 +21,13 @@ export default async function CreatorDashboardLayout({ children }: { children: R
     avatarUrl: creatorProfile?.avatar_url || null,
     email: profile.email,
   };
+  const publicCardHandle = card?.published_at ? (creatorProfile?.handle ?? null) : null;
   const walletBalance = (available ?? []).reduce((acc, e) => acc + Number(e.amount), 0);
 
   return (
-    <DashboardShell role="creator" navItems={CREATOR_NAV} identity={identity} stats={stats} walletBalance={walletBalance}>
+    <DashboardShell role="creator" navItems={CREATOR_NAV} identity={identity} stats={stats} walletBalance={walletBalance}
+      publicCardHandle={publicCardHandle}
+    >
       {children}
     </DashboardShell>
   );
