@@ -2,15 +2,27 @@
 
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { onboardingSchema, signInSchema, signUpSchema } from "@/lib/validations/auth";
+import { forgotPasswordSchema, onboardingSchema, signInSchema, signUpSchema, updatePasswordSchema } from "@/lib/validations/auth";
+import { getRequestOrigin } from "@/lib/auth/origin";
 import { redeemReferralCode } from "@/lib/actions/affiliate-helpers";
 import { REFERRAL_CODE_COOKIE } from "@/lib/constants";
 import type { AppRole } from "@/types/database";
 
 export interface AuthActionResult {
   error?: string;
+  /** Per-field messages from validation, keyed by input name. */
+  fieldErrors?: Record<string, string>;
   needsEmailConfirmation?: boolean;
   role?: AppRole | null;
+}
+
+function validationFailure(issues: { path: PropertyKey[]; message: string }[]): AuthActionResult {
+  const fieldErrors: Record<string, string> = {};
+  for (const issue of issues) {
+    const key = String(issue.path[0] ?? "");
+    if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
+  }
+  return { error: issues[0]?.message ?? "Invalid input", fieldErrors };
 }
 
 function slugify(input: string) {
@@ -25,15 +37,17 @@ function slugify(input: string) {
 
 export async function signUpAction(input: { fullName: string; email: string; password: string }): Promise<AuthActionResult> {
   const parsed = signUpSchema.safeParse(input);
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
-  }
+  if (!parsed.success) return validationFailure(parsed.error.issues);
 
   const supabase = await createClient();
+  const origin = await getRequestOrigin();
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
-    options: { data: { full_name: parsed.data.fullName } },
+    options: {
+      data: { full_name: parsed.data.fullName },
+      emailRedirectTo: `${origin}/auth/callback?next=/onboarding`,
+    },
   });
 
   if (error) return { error: error.message };
@@ -46,9 +60,7 @@ export async function signUpAction(input: { fullName: string; email: string; pas
 
 export async function signInAction(input: { email: string; password: string }): Promise<AuthActionResult> {
   const parsed = signInSchema.safeParse(input);
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
-  }
+  if (!parsed.success) return validationFailure(parsed.error.issues);
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
@@ -61,6 +73,52 @@ export async function signInAction(input: { email: string; password: string }): 
     .maybeSingle();
 
   return { role: profile?.role ?? null };
+}
+
+export async function requestPasswordResetAction(input: { email: string }): Promise<AuthActionResult> {
+  const parsed = forgotPasswordSchema.safeParse(input);
+  if (!parsed.success) return validationFailure(parsed.error.issues);
+
+  const supabase = await createClient();
+  const origin = await getRequestOrigin();
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo: `${origin}/auth/callback?next=/reset-password`,
+  });
+  // Don't reveal whether the address has an account; only surface delivery/rate-limit failures.
+  if (error && error.status === 429) return { error: "Too many requests. Please wait a minute and try again." };
+  return {};
+}
+
+export async function updatePasswordAction(input: { password: string; confirmPassword: string }): Promise<AuthActionResult> {
+  const parsed = updatePasswordSchema.safeParse(input);
+  if (!parsed.success) return validationFailure(parsed.error.issues);
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "This reset link has expired. Request a new one." };
+
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  if (error) return { error: error.message };
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+  return { role: profile?.role ?? null };
+}
+
+export async function resendConfirmationAction(input: { email: string }): Promise<AuthActionResult> {
+  const parsed = forgotPasswordSchema.safeParse(input);
+  if (!parsed.success) return validationFailure(parsed.error.issues);
+
+  const supabase = await createClient();
+  const origin = await getRequestOrigin();
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email: parsed.data.email,
+    options: { emailRedirectTo: `${origin}/auth/callback?next=/onboarding` },
+  });
+  if (error) return { error: error.message };
+  return {};
 }
 
 export async function signOutAction(): Promise<void> {
