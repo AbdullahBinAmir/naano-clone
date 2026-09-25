@@ -3,13 +3,13 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Eye, FileText } from "lucide-react";
+import { Eye, FileText, Pencil } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { OpportunityCard } from "@/components/creator/opportunity-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { createCampaignAction, updateCampaignStatusAction } from "@/lib/actions/campaigns";
+import { createCampaignAction, updateCampaignAction, updateCampaignStatusAction } from "@/lib/actions/campaigns";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { Campaign, CampaignStatus } from "@/types/domain";
 
@@ -41,7 +41,9 @@ export function BriefsWorkspace({ brandName, campaigns, today }: { brandName: st
   const [saving, setSaving] = React.useState(false);
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const [editingId, setEditingId] = React.useState<string | null>(null);
 
+  const editing = campaigns.find((c) => c.id === editingId) ?? null;
   const selected = campaigns.find((c) => c.id === selectedId) ?? null;
   const preview = selected
     ? {
@@ -53,26 +55,45 @@ export function BriefsWorkspace({ brandName, campaigns, today }: { brandName: st
       }
     : { title, briefText: brief, targetVertical, budget: Number(budget) || 0, deadline: deadline || null };
 
-  async function handleSave() {
-    setSaving(true);
-    const result = await createCampaignAction({
-      title,
-      briefText: brief,
-      targetVertical,
-      budget: Number(budget) || 0,
-      deadline: deadline || null,
-    });
-    setSaving(false);
-    if (result.error) {
-      toast.error(result.error);
-      return;
-    }
-    toast.success("Brief saved as a draft");
+  function resetComposer() {
+    setEditingId(null);
     setTitle("");
     setBrief("");
     setTargetVertical("");
     setBudget("");
     setDeadline("");
+  }
+
+  function startEdit(c: Campaign) {
+    setSelectedId(null);
+    setEditingId(c.id);
+    setTitle(c.title);
+    setBrief(c.briefText);
+    setTargetVertical(c.targetVertical);
+    setBudget(String(c.budget));
+    setDeadline(c.deadline ?? "");
+    document.getElementById("brief-composer")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    const payload = {
+      title,
+      briefText: brief,
+      targetVertical,
+      budget: Number(budget) || 0,
+      deadline: deadline || null,
+    };
+    const result = editing
+      ? await updateCampaignAction({ ...payload, campaignId: editing.id, clearDeadline: !deadline && !!editing.deadline })
+      : await createCampaignAction(payload);
+    setSaving(false);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success(editing ? "Brief updated" : "Brief saved as a draft");
+    resetComposer();
     router.refresh();
   }
 
@@ -84,7 +105,7 @@ export function BriefsWorkspace({ brandName, campaigns, today }: { brandName: st
       toast.error(result.error);
       return;
     }
-    toast.success(status === "published" ? "Brief published — creators can now apply" : "Brief closed");
+    toast.success(status === "published" ? "Brief is live — creators can apply" : "Brief closed");
     router.refresh();
   }
 
@@ -97,12 +118,17 @@ export function BriefsWorkspace({ brandName, campaigns, today }: { brandName: st
       />
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card padding="lg" className={cn(selected && "opacity-60")}>
+        <Card id="brief-composer" padding="lg" className={cn("scroll-mt-28", selected && "opacity-60")}>
           <CardHeader>
-            <CardTitle className="text-2xl">New brief</CardTitle>
+            <CardTitle className="text-2xl">{editing ? "Edit brief" : "New brief"}</CardTitle>
             {selected && (
               <Button size="sm" variant="outline" onClick={() => setSelectedId(null)}>
                 Back to composer
+              </Button>
+            )}
+            {editing && (
+              <Button size="sm" variant="outline" onClick={resetComposer}>
+                Cancel edit
               </Button>
             )}
           </CardHeader>
@@ -144,9 +170,13 @@ export function BriefsWorkspace({ brandName, campaigns, today }: { brandName: st
               />
             </Field>
             <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
-              <p className="text-[13px] text-foreground-muted">Saves as a draft — publish it below when you&apos;re ready.</p>
+              <p className="text-[13px] text-foreground-muted">
+                {editing
+                  ? "Changes show to creators right away if the brief is live."
+                  : "Saves as a draft — publish it below when you're ready."}
+              </p>
               <Button variant="primary" onClick={handleSave} disabled={saving || !title.trim() || !!selected}>
-                {saving ? "Saving…" : "Save draft"}
+                {saving ? "Saving…" : editing ? "Save changes" : "Save draft"}
               </Button>
             </div>
           </div>
@@ -212,16 +242,27 @@ export function BriefsWorkspace({ brandName, campaigns, today }: { brandName: st
                     <span className="text-sm text-foreground-muted">
                       {formatCurrency(c.budget)} · {c.targetVertical || "No vertical"}
                     </span>
-                    {c.status === "draft" && (
-                      <Button size="sm" variant="primary" disabled={busy} onClick={() => setStatus(c.id, "published")}>
-                        {busy ? "…" : "Publish"}
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="ghost" onClick={() => startEdit(c)} aria-label={`Edit ${c.title}`}>
+                        <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
+                        Edit
                       </Button>
-                    )}
-                    {c.status === "published" && (
-                      <Button size="sm" variant="outline" disabled={busy} onClick={() => setStatus(c.id, "closed")}>
-                        {busy ? "…" : "Close"}
-                      </Button>
-                    )}
+                      {c.status === "draft" && (
+                        <Button size="sm" variant="primary" disabled={busy} onClick={() => setStatus(c.id, "published")}>
+                          {busy ? "…" : "Publish"}
+                        </Button>
+                      )}
+                      {c.status === "published" && (
+                        <Button size="sm" variant="outline" disabled={busy} onClick={() => setStatus(c.id, "closed")}>
+                          {busy ? "…" : "Close"}
+                        </Button>
+                      )}
+                      {c.status === "closed" && (
+                        <Button size="sm" variant="outline" disabled={busy} onClick={() => setStatus(c.id, "published")}>
+                          {busy ? "…" : "Reopen"}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </Card>
               );

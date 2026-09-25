@@ -8,20 +8,23 @@ import type { Database } from "@/types/database";
  * supabase/migrations/0006_conversation_functions.sql) since inserting a
  * conversation_participants row for someone *other* than the caller can't
  * be expressed as plain owner-scoped RLS. Best-effort: a failure here
- * shouldn't roll back or block the collaboration itself.
+ * shouldn't roll back or block the collaboration itself. Returns the
+ * collaboration's conversation id, or null if it couldn't be created.
  */
 export async function seedCollaborationConversation(
   supabase: SupabaseClient<Database>,
   params: { collaborationId: string; creatorProfileId: string; brandProfileId: string },
 ) {
   try {
-    await supabase.rpc("create_collaboration_conversation", {
+    const { data: conversationId } = await supabase.rpc("create_collaboration_conversation", {
       p_collaboration_id: params.collaborationId,
       p_creator_profile_id: params.creatorProfileId,
       p_brand_profile_id: params.brandProfileId,
     });
     await supabase.rpc("ensure_naanobot_welcome", { p_creator_profile_id: params.creatorProfileId });
+    return conversationId ?? null;
   } catch (e) {
     console.error("seedCollaborationConversation failed (non-fatal):", e);
+    return null;
   }
 }

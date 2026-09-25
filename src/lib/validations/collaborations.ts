@@ -2,6 +2,8 @@ import { z } from "zod";
 
 export const applyToCampaignSchema = z.object({
   campaignId: z.string().uuid(),
+  /** Optional pitch shown to the brand as the first message in the thread. */
+  note: z.string().trim().max(500, "Keep your note under 500 characters").optional(),
 });
 
 export const inviteCreatorSchema = z.object({

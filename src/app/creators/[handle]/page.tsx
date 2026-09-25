@@ -5,7 +5,7 @@ import { MapPin, ExternalLink } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { BookPostButton } from "@/components/creator/book-post-button";
+import { BookPostButton, type BookingMode } from "@/components/creator/book-post-button";
 import { LogCardVisit } from "@/components/creator/log-card-visit";
 import { getDemoCreatorByHandle } from "@/lib/demo-data";
 import { analyticsByCreator, linkedinPostsByCreator } from "@/lib/demo-data/analytics";
@@ -117,11 +117,36 @@ async function loadDemoCreator(handle: string): Promise<ViewModel | null> {
   };
 }
 
+async function resolveBookingMode(handle: string, vm: ViewModel): Promise<BookingMode> {
+  // Demo-fallback profiles have no real account behind them, so nothing to book.
+  if (!vm.cardId) return { kind: "unavailable" };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { kind: "signed-out", signInHref: `/sign-in?next=${encodeURIComponent(`/creators/${handle}`)}` };
+  if (user.id === vm.profile.profileId) return { kind: "own" };
+
+  const { data: me } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+  if (me?.role !== "brand") return me ? { kind: "creator" } : { kind: "signed-out", signInHref: "/onboarding" };
+
+  const { data: existing } = await supabase
+    .from("collaborations")
+    .select("id")
+    .is("campaign_id", null)
+    .eq("creator_profile_id", vm.profile.profileId)
+    .eq("brand_profile_id", user.id)
+    .maybeSingle();
+  return { kind: "brand", creatorProfileId: vm.profile.profileId, alreadyOffered: !!existing };
+}
+
 export default async function PublicCreatorCardPage({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
   const vm = (await loadRealCreator(handle)) ?? (await loadDemoCreator(handle));
   if (!vm) notFound();
 
+  const bookingMode = await resolveBookingMode(handle, vm);
   const { profile, card, cardId, publicPostReach, publicEngagements, posts, seniority } = vm;
 
   return (
@@ -249,7 +274,7 @@ export default async function PublicCreatorCardPage({ params }: { params: Promis
               <p className="text-3xl font-semibold text-accent">{formatCurrency(card.pricePerPost)}</p>
               <p className="text-sm text-foreground-subtle">per sponsored post</p>
             </div>
-            <BookPostButton creatorName={profile.displayName} />
+            <BookPostButton creatorName={profile.displayName} pricePerPost={card.pricePerPost} mode={bookingMode} />
           </Card>
         </div>
       </div>

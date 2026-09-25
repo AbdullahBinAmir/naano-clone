@@ -16,3 +16,9 @@ export const campaignStatusSchema = z.object({
   campaignId: z.string().uuid(),
   status: z.enum(["draft", "published", "closed"]),
 });
+
+export const updateCampaignSchema = createCampaignSchema.extend({
+  campaignId: z.string().uuid(),
+  /** Set when the brand emptied a previously set apply-by date. */
+  clearDeadline: z.boolean().optional(),
+});

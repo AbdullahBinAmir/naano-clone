@@ -77,11 +77,24 @@ export async function applyToCampaignAction(input: unknown): Promise<Collaborati
     return { error: error.message };
   }
 
-  await seedCollaborationConversation(supabase, {
+  const conversationId = await seedCollaborationConversation(supabase, {
     collaborationId: inserted.id,
     creatorProfileId: user.id,
     brandProfileId: campaign.brand_profile_id,
   });
+
+  // The pitch note travels as the creator's first message, so the brand sees
+  // it in the thread and in the applicant inbox context. Non-fatal on failure:
+  // the application itself has already been recorded.
+  if (parsed.data.note && conversationId) {
+    const { error: noteError } = await supabase.from("messages").insert({
+      conversation_id: conversationId,
+      sender_profile_id: user.id,
+      body: parsed.data.note,
+      is_system: false,
+    });
+    if (noteError) console.error("pitch note insert failed (non-fatal):", noteError.message);
+  }
 
   return {};
 }

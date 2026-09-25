@@ -7,9 +7,10 @@ import { Briefcase, MessageSquare, Search } from "lucide-react";
 import { OpportunityCard } from "@/components/creator/opportunity-card";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { applyToCampaignAction } from "@/lib/actions/collaborations";
 import { startDirectConversationAction } from "@/lib/actions/messages";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 export interface FeedBrief {
   id: string;
@@ -43,6 +44,8 @@ export function BriefFeed({ briefs, today }: { briefs: FeedBrief[]; today: strin
   const [sort, setSort] = React.useState<Sort>("newest");
   const [vertical, setVertical] = React.useState("");
   const [applyingId, setApplyingId] = React.useState<string | null>(null);
+  const [applyTarget, setApplyTarget] = React.useState<FeedBrief | null>(null);
+  const [note, setNote] = React.useState("");
   const [messagingId, setMessagingId] = React.useState<string | null>(null);
 
   const verticals = React.useMemo(() => {
@@ -68,14 +71,22 @@ export function BriefFeed({ briefs, today }: { briefs: FeedBrief[]; today: strin
     });
   }, [briefs, query, vertical, sort]);
 
-  async function handleApply(b: FeedBrief) {
+  function openApply(b: FeedBrief) {
+    setNote("");
+    setApplyTarget(b);
+  }
+
+  async function handleApply() {
+    const b = applyTarget;
+    if (!b) return;
     setApplyingId(b.id);
-    const result = await applyToCampaignAction({ campaignId: b.id });
+    const result = await applyToCampaignAction({ campaignId: b.id, note: note.trim() || undefined });
     setApplyingId(null);
     if (result.error) {
       toast.error(result.error);
       return;
     }
+    setApplyTarget(null);
     toast.success(`Application sent to ${b.brandName}`);
     router.refresh();
   }
@@ -175,8 +186,8 @@ export function BriefFeed({ briefs, today }: { briefs: FeedBrief[]; today: strin
                   <Button variant="outline" size="sm" onClick={() => handleMessage(b)} disabled={messagingId === b.id} aria-label={`Message ${b.brandName}`}>
                     <MessageSquare className="h-3.5 w-3.5" strokeWidth={1.75} />
                   </Button>
-                  <Button variant="primary" size="sm" onClick={() => handleApply(b)} disabled={applyingId === b.id}>
-                    {applyingId === b.id ? "Applying…" : "Apply"}
+                  <Button variant="primary" size="sm" onClick={() => openApply(b)}>
+                    Apply
                   </Button>
                 </div>
               }
@@ -184,6 +195,32 @@ export function BriefFeed({ briefs, today }: { briefs: FeedBrief[]; today: strin
           ))}
         </div>
       )}
+      <Dialog open={applyTarget !== null} onOpenChange={(open) => !open && setApplyTarget(null)}>
+        <DialogContent>
+          <DialogTitle>Apply to {applyTarget?.brandName}</DialogTitle>
+          <DialogDescription className="mt-2">
+            {applyTarget ? `${applyTarget.title} · ${formatCurrency(applyTarget.budget)}. ` : ""}
+            Add a short pitch so the brand knows why you&apos;re a fit — it&apos;s sent as your first message.
+          </DialogDescription>
+          <label className="mt-4 flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-foreground-muted">Pitch (optional)</span>
+            <textarea
+              className="input min-h-28"
+              maxLength={500}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="I write about this every week and my audience is mostly…"
+            />
+            <span className="text-[13px] text-foreground-subtle">{note.length} / 500</span>
+          </label>
+          <div className="mt-5 flex justify-end gap-3">
+            <DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>
+            <Button variant="primary" onClick={handleApply} disabled={applyingId !== null}>
+              {applyingId !== null ? "Sending…" : "Send application"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
