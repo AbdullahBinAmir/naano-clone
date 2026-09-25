@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import NumberFlow from "@number-flow/react";
 import { Popover as BasePopover } from "@base-ui-components/react/popover";
 import { Bell, LogOut, UserCog } from "lucide-react";
-import { toast } from "sonner";
 import { Avatar } from "@/components/ui/avatar";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "@/components/ui/menu";
 import { StatChip } from "@/components/ui/stat-chip";
@@ -32,6 +32,7 @@ export function Topbar({
   badges: Record<string, number>;
   walletBalance?: number;
 }) {
+  const router = useRouter();
   const { signOut, pending } = useSignOut();
   const chipLink =
     "rounded-md outline-none focus-visible:ring-2 focus-visible:ring-accent/60 transition-opacity hover:opacity-90";
@@ -128,7 +129,7 @@ export function Topbar({
               <p className="truncate text-xs text-foreground-subtle">{identity.email}</p>
             </div>
             <div className="my-1 h-px bg-border" />
-            <MenuItem onClick={() => toast("Settings aren't wired up yet.")}>
+            <MenuItem onClick={() => router.push(`/dashboard/${role}/settings`)}>
               <UserCog className="h-3.5 w-3.5" strokeWidth={1.75} />
               Settings
             </MenuItem>
