@@ -10,14 +10,14 @@ export default async function CreatorSettingsPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("creator_profiles")
-    .select("display_name, linkedin_public_url")
+    .select("display_name, linkedin_public_url, avatar_url")
     .eq("profile_id", user.id)
     .maybeSingle();
 
   return (
     <>
       <PageHeader title="Settings" description="Manage your profile and account." />
-      <CreatorSettingsForm displayName={data?.display_name ?? ""} linkedinPublicUrl={data?.linkedin_public_url ?? ""} />
+      <CreatorSettingsForm userId={user.id} avatarUrl={data?.avatar_url ?? ""} displayName={data?.display_name ?? ""} linkedinPublicUrl={data?.linkedin_public_url ?? ""} />
       <PasswordForm />
       <AccountCard email={profile.email} role="creator" />
     </>

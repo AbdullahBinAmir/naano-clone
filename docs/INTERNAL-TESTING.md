@@ -7,7 +7,7 @@ out. Pages that show money carry a "Test mode" notice.
 ## Before you start
 
 The database must have every migration in `supabase/migrations/` applied,
-in order (the latest, `0015_notifications.sql`, powers the notification bell).
+in order (`0015_notifications.sql` powers the notification bell; `0016_security_hardening.sql` closes the audit findings; `0017_profile_images_storage.sql` creates the image bucket for avatar, banner and logo uploads; `0018_campaign_delete.sql` lets brands delete unused briefs).
 Supabase auth redirect URLs must include `<site>/auth/callback`.
 
 ## Test accounts
@@ -28,14 +28,14 @@ Sign up with a new email to test onboarding — choose creator or brand.
 ## Walkthrough
 
 **Brand**
-1. *Briefs* — write a brief, watch the live preview, save as draft, publish, edit, close and reopen it.
+1. *Briefs* — write a brief, watch the live preview, save as draft, publish, edit, close, reopen or delete it.
 2. *Match* — browse creators, message one, or open the *Pitches* tab to review applicants side by side.
 3. *Collaborations* — drag deals on the board (or use the buttons) to accept or decline.
 4. Public creator card → **Book a post** sends a direct offer at the creator's price.
-5. *Billing*, *Messages*, *Settings* (company name, industry, password).
+5. *Billing*, *Messages*, *Settings* (company logo, name, industry, password).
 
 **Creator**
-1. *My card* — edit and publish your card; *Copy my card link* from the assistant (⌘K).
+1. *My card* — upload a banner and profile photo, edit and publish your card; *Copy my card link* from the assistant (⌘K).
 2. *Opportunities* — filter/sort open briefs, **Apply** with an optional pitch note.
 3. *Collaborations* — accept or decline offers; mark an active deal as posted.
 4. *Earnings* — payout appears "in transit", then "available"; save bank details and withdraw (simulated).
@@ -48,9 +48,9 @@ mobile layout (sidebar becomes a drawer).
 ## Known limitations
 
 - Payments are not connected. Earnings, withdrawals and billing are simulated ledger entries.
-- Briefs can be closed but not deleted (no delete policy in the database).
+- Briefs can be deleted only while nobody has applied; after that they can only be closed.
 - Creators can't change their public handle.
-- No image upload yet. On the marketing landing page, creators without an avatar are shown with stock portraits (Unsplash) — a real avatar always replaces it. Dashboards still show initials.
+- On the marketing landing page, creators without an uploaded photo are shown with stock portraits (Unsplash); an uploaded profile photo always replaces it. Dashboards show initials until a photo is uploaded.
 - The landing page's sample brands and campaign figures are fictional, static illustrations.
 - The French language switcher and notification preferences are not implemented.
 - Notifications only exist for events after migration `0015` was applied.

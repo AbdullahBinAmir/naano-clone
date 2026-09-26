@@ -3,13 +3,14 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Eye, FileText, Pencil } from "lucide-react";
+import { Eye, FileText, Pencil, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { OpportunityCard } from "@/components/creator/opportunity-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { createCampaignAction, updateCampaignAction, updateCampaignStatusAction } from "@/lib/actions/campaigns";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { createCampaignAction, deleteCampaignAction, updateCampaignAction, updateCampaignStatusAction } from "@/lib/actions/campaigns";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { Campaign, CampaignStatus } from "@/types/domain";
 
@@ -31,7 +32,17 @@ function Field({ label, children, hint }: { label: string; children: React.React
   );
 }
 
-export function BriefsWorkspace({ brandName, campaigns, today }: { brandName: string; campaigns: Campaign[]; today: string }) {
+export function BriefsWorkspace({
+  brandName,
+  campaigns,
+  today,
+  applicationCounts,
+}: {
+  brandName: string;
+  campaigns: Campaign[];
+  today: string;
+  applicationCounts: Record<string, number>;
+}) {
   const router = useRouter();
   const [title, setTitle] = React.useState("");
   const [brief, setBrief] = React.useState("");
@@ -42,6 +53,7 @@ export function BriefsWorkspace({ brandName, campaigns, today }: { brandName: st
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = React.useState<Campaign | null>(null);
 
   const editing = campaigns.find((c) => c.id === editingId) ?? null;
   const selected = campaigns.find((c) => c.id === selectedId) ?? null;
@@ -94,6 +106,23 @@ export function BriefsWorkspace({ brandName, campaigns, today }: { brandName: st
     }
     toast.success(editing ? "Brief updated" : "Brief saved as a draft");
     resetComposer();
+    router.refresh();
+  }
+
+  async function handleDelete() {
+    const target = deleteTarget;
+    if (!target) return;
+    setPendingId(target.id);
+    const result = await deleteCampaignAction({ campaignId: target.id });
+    setPendingId(null);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    setDeleteTarget(null);
+    if (editingId === target.id) resetComposer();
+    if (selectedId === target.id) setSelectedId(null);
+    toast.success("Brief deleted");
     router.refresh();
   }
 
@@ -241,12 +270,18 @@ export function BriefsWorkspace({ brandName, campaigns, today }: { brandName: st
                   <div className="flex items-center justify-between border-t border-border pt-3">
                     <span className="text-sm text-foreground-muted">
                       {formatCurrency(c.budget)} · {c.targetVertical || "No vertical"}
+                      {applicationCounts[c.id] ? ` · ${applicationCounts[c.id]} ${applicationCounts[c.id] === 1 ? "applicant" : "applicants"}` : ""}
                     </span>
                     <div className="flex items-center gap-2">
                       <Button size="sm" variant="ghost" onClick={() => startEdit(c)} aria-label={`Edit ${c.title}`}>
                         <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
                         Edit
                       </Button>
+                      {!applicationCounts[c.id] && (
+                        <Button size="sm" variant="ghost" onClick={() => setDeleteTarget(c)} aria-label={`Delete ${c.title}`}>
+                          <Trash2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+                        </Button>
+                      )}
                       {c.status === "draft" && (
                         <Button size="sm" variant="primary" disabled={busy} onClick={() => setStatus(c.id, "published")}>
                           {busy ? "…" : "Publish"}
@@ -270,6 +305,21 @@ export function BriefsWorkspace({ brandName, campaigns, today }: { brandName: st
           </div>
         )}
       </section>
+
+      <Dialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogTitle>Delete “{deleteTarget?.title}”?</DialogTitle>
+          <DialogDescription className="mt-2">
+            This removes the brief permanently. Nobody has applied to it yet, so no deals are affected.
+          </DialogDescription>
+          <div className="mt-6 flex justify-end gap-3">
+            <DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>
+            <Button variant="danger" onClick={handleDelete} disabled={pendingId !== null}>
+              {pendingId !== null ? "Deleting…" : "Delete brief"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

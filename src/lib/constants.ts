@@ -23,3 +23,6 @@ export const BRAND_NAV = [
 ] as const;
 
 export const MARKETPLACE_FOLLOWER_THRESHOLD = 1000;
+
+/** Public Supabase Storage bucket for avatars, card banners and brand logos (migration 0017). */
+export const PROFILE_IMAGES_BUCKET = "profile-images";

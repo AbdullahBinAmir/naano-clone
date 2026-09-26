@@ -5,9 +5,20 @@ import { toast } from "sonner";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
+import { ImageUpload } from "@/components/ui/image-upload";
 import { updateCreatorSettingsAction } from "@/lib/actions/settings";
 
-export function CreatorSettingsForm({ displayName, linkedinPublicUrl }: { displayName: string; linkedinPublicUrl: string }) {
+export function CreatorSettingsForm({
+  userId,
+  avatarUrl,
+  displayName,
+  linkedinPublicUrl,
+}: {
+  userId: string;
+  avatarUrl: string;
+  displayName: string;
+  linkedinPublicUrl: string;
+}) {
   const [pending, setPending] = React.useState(false);
   const [name, setName] = React.useState(displayName);
   const [linkedin, setLinkedin] = React.useState(linkedinPublicUrl);
@@ -32,7 +43,8 @@ export function CreatorSettingsForm({ displayName, linkedinPublicUrl }: { displa
       <CardHeader>
         <CardTitle>Profile</CardTitle>
       </CardHeader>
-      <form className="flex max-w-md flex-col gap-4" onSubmit={onSubmit} noValidate>
+      <form className="flex max-w-md flex-col gap-5" onSubmit={onSubmit} noValidate>
+        <ImageUpload kind="avatar" userId={userId} value={avatarUrl} name={name} label="Profile photo" />
         <TextField
           label="Display name"
           name="displayName"

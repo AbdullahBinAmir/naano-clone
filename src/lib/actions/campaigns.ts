@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { campaignStatusSchema, createCampaignSchema, updateCampaignSchema } from "@/lib/validations/campaigns";
+import { campaignIdSchema, campaignStatusSchema, createCampaignSchema, updateCampaignSchema } from "@/lib/validations/campaigns";
 
 export interface CampaignActionResult {
   error?: string;
@@ -97,5 +97,30 @@ export async function updateCampaignAction(input: unknown): Promise<CampaignActi
     .eq("brand_profile_id", user.id);
   if (error) return { error: error.message };
 
+  return {};
+}
+
+export async function deleteCampaignAction(input: { campaignId: string }): Promise<CampaignActionResult> {
+  const parsed = campaignIdSchema.safeParse(input);
+  if (!parsed.success) return { error: "Invalid brief." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You need to sign in first." };
+
+  // RLS only allows deleting one's own brief while it has no collaborations;
+  // an empty result therefore means either it's gone already or it has applicants.
+  const { data, error } = await supabase
+    .from("campaigns")
+    .delete()
+    .eq("id", parsed.data.campaignId)
+    .eq("brand_profile_id", user.id)
+    .select("id");
+  if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "Couldn't delete this brief — it may have applicants or offers (close it instead), or migration 0018 isn't applied yet." };
+  }
   return {};
 }

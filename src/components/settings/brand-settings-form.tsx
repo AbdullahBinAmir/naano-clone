@@ -5,9 +5,20 @@ import { toast } from "sonner";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
+import { ImageUpload } from "@/components/ui/image-upload";
 import { updateBrandSettingsAction } from "@/lib/actions/settings";
 
-export function BrandSettingsForm({ companyName, industry }: { companyName: string; industry: string }) {
+export function BrandSettingsForm({
+  userId,
+  logoUrl,
+  companyName,
+  industry,
+}: {
+  userId: string;
+  logoUrl: string;
+  companyName: string;
+  industry: string;
+}) {
   const [pending, setPending] = React.useState(false);
   const [name, setName] = React.useState(companyName);
   const [ind, setInd] = React.useState(industry);
@@ -32,7 +43,8 @@ export function BrandSettingsForm({ companyName, industry }: { companyName: stri
       <CardHeader>
         <CardTitle>Company</CardTitle>
       </CardHeader>
-      <form className="flex max-w-md flex-col gap-4" onSubmit={onSubmit} noValidate>
+      <form className="flex max-w-md flex-col gap-5" onSubmit={onSubmit} noValidate>
+        <ImageUpload kind="logo" userId={userId} value={logoUrl} name={name} label="Company logo" />
         <TextField
           label="Company name"
           name="companyName"

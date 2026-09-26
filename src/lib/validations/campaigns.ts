@@ -22,3 +22,5 @@ export const updateCampaignSchema = createCampaignSchema.extend({
   /** Set when the brand emptied a previously set apply-by date. */
   clearDeadline: z.boolean().optional(),
 });
+
+export const campaignIdSchema = z.object({ campaignId: z.string().uuid() });

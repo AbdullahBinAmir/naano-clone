@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
 import { CreatorCardPreview } from "@/components/creator/creator-card-preview";
 import { Button } from "@/components/ui/button";
+import { ImageUpload } from "@/components/ui/image-upload";
 import { updateCreatorCardAction, togglePublishCardAction } from "@/lib/actions/creator-card";
 import { MARKETPLACE_FOLLOWER_THRESHOLD } from "@/lib/constants";
 import type { CreatorCard, CreatorProfile } from "@/types/domain";
@@ -119,6 +120,23 @@ export function MyCardForm({ profile, card }: { profile: CreatorProfile; card: C
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.1fr_1fr]">
         <Card className="flex flex-col gap-5">
           <h2 className="text-lg font-semibold">Edit your card</h2>
+
+          <ImageUpload
+            kind="banner"
+            userId={profile.profileId}
+            value={draftCard.bannerUrl}
+            name={draftProfile.displayName}
+            label="Banner image"
+            onChange={(url) => setDraftCard((c) => ({ ...c, bannerUrl: url }))}
+          />
+          <ImageUpload
+            kind="avatar"
+            userId={profile.profileId}
+            value={draftProfile.avatarUrl}
+            name={draftProfile.displayName}
+            label="Profile photo"
+            onChange={(url) => setDraftProfile((p) => ({ ...p, avatarUrl: url }))}
+          />
 
           <Field label="Display name">
             <input

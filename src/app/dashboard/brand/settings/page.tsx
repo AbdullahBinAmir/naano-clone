@@ -10,14 +10,14 @@ export default async function BrandSettingsPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("brand_profiles")
-    .select("company_name, industry")
+    .select("company_name, industry, logo_url")
     .eq("profile_id", user.id)
     .maybeSingle();
 
   return (
     <>
       <PageHeader title="Settings" description="Manage your company profile and account." />
-      <BrandSettingsForm companyName={data?.company_name ?? ""} industry={data?.industry ?? ""} />
+      <BrandSettingsForm userId={user.id} logoUrl={data?.logo_url ?? ""} companyName={data?.company_name ?? ""} industry={data?.industry ?? ""} />
       <PasswordForm />
       <AccountCard email={profile.email} role="brand" />
     </>
