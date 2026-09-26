@@ -175,7 +175,7 @@ export function BriefsWorkspace({
                   placeholder="B2B SaaS, RevOps"
                 />
               </Field>
-              <Field label="Budget (EUR)">
+              <Field label="Budget (USD)">
                 <input
                   type="number"
                   min={0}

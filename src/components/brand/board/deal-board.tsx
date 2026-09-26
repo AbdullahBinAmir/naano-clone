@@ -8,6 +8,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { updateCollaborationStatusAction } from "@/lib/actions/collaborations";
+import { startCheckoutAction } from "@/lib/actions/payments";
 import type { BoardDeal } from "@/lib/brand/get-brand-deals";
 import type { CollaborationStatus } from "@/types/database";
 import { cn, formatCurrency, initials } from "@/lib/utils";
@@ -19,9 +20,10 @@ interface Column {
 }
 
 const COLUMNS: Column[] = [
-  { status: "applied", title: "Pitches", hint: "Drag to Active to accept, or to Declined" },
+  { status: "applied", title: "Pitches", hint: "Drag to Awaiting payment to accept, or to Declined" },
   { status: "needs_action", title: "Awaiting creator", hint: "Offers you sent — the creator responds" },
-  { status: "active", title: "Active", hint: "Creators publish their posts" },
+  { status: "pending_payment", title: "Awaiting payment", hint: "Accepted — pay to start the work" },
+  { status: "active", title: "Active", hint: "Paid — creators publish their posts" },
   { status: "completed", title: "Completed", hint: "Marked as posted by the creator" },
   { status: "declined", title: "Declined", hint: "Closed without a booking" },
 ];
@@ -33,7 +35,7 @@ const COLUMNS: Column[] = [
  * belongs to the creator (accept/decline an offer, mark posted).
  */
 const BRAND_MOVES: Partial<Record<CollaborationStatus, Partial<Record<CollaborationStatus, "accept" | "decline">>>> = {
-  applied: { active: "accept", declined: "decline" },
+  applied: { pending_payment: "accept", declined: "decline" },
 };
 
 const canMove = (from: CollaborationStatus, to: CollaborationStatus) => !!BRAND_MOVES[from]?.[to];
@@ -76,7 +78,30 @@ export function DealBoard({ deals: initialDeals }: { deals: BoardDeal[] }) {
       toast.error(result.error);
       return;
     }
-    toast.success(action === "accept" ? "Pitch accepted — deal is active" : "Pitch declined");
+    toast.success(action === "accept" ? "Pitch accepted — pay to start the work" : "Pitch declined");
+    router.refresh();
+  }
+
+  async function pay(deal: BoardDeal) {
+    setBusyId(deal.id);
+    const result = await startCheckoutAction({ collaborationId: deal.id });
+    if (result.error || !result.url) {
+      setBusyId(null);
+      toast.error(result.error ?? "Couldn't start the payment.");
+      return;
+    }
+    window.location.assign(result.url); // hosted Safepay checkout
+  }
+
+  async function cancelDeal(deal: BoardDeal) {
+    setBusyId(deal.id);
+    const result = await updateCollaborationStatusAction({ collaborationId: deal.id, action: "decline" });
+    setBusyId(null);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Deal cancelled");
     router.refresh();
   }
 
@@ -166,10 +191,20 @@ export function DealBoard({ deals: initialDeals }: { deals: BoardDeal[] }) {
                           : "No due date"}
                       </span>
                     </div>
+                    {d.status === "pending_payment" && (
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="primary" className="flex-1" disabled={busy} onClick={() => pay(d)}>
+                          {busy ? "Opening…" : "Pay now"}
+                        </Button>
+                        <Button size="sm" variant="outline" className="flex-1" disabled={busy} onClick={() => cancelDeal(d)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    )}
                     {/* Keyboard / touch alternative to dragging. */}
                     {movable && (
                       <div className="flex gap-2">
-                        <Button size="sm" variant="primary" className="flex-1" disabled={busy} onClick={() => move(d, "active")}>
+                        <Button size="sm" variant="primary" className="flex-1" disabled={busy} onClick={() => move(d, "pending_payment")}>
                           Accept
                         </Button>
                         <Button size="sm" variant="outline" className="flex-1" disabled={busy} onClick={() => move(d, "declined")}>

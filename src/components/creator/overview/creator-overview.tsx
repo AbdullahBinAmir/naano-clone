@@ -1,5 +1,6 @@
 "use client";
 
+import { CURRENCY } from "@/lib/constants";
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -42,7 +43,7 @@ export interface CreatorOverviewProps {
   earnings: { totalEarned: number; available: number; inTransit: number };
 }
 
-const EUR = { style: "currency", currency: "EUR", maximumFractionDigits: 0 } as const;
+const MONEY = { style: "currency", currency: CURRENCY, maximumFractionDigits: 0 } as const;
 
 function daysLeftLabel(daysLeft: number | null) {
   if (daysLeft === null) return "No due date";
@@ -279,7 +280,7 @@ export function CreatorOverview({
 
         <aside className="flex min-w-0 flex-col gap-6">
           <GradientStatCard
-            value={<NumberFlow value={earnings.totalEarned} format={EUR} />}
+            value={<NumberFlow value={earnings.totalEarned} format={MONEY} />}
             label={`Earned · ${formatCurrency(earnings.available)} available${earnings.inTransit > 0 ? `, ${formatCurrency(earnings.inTransit)} in transit` : ""}`}
           />
           <Link href="/dashboard/creator/earnings" className={buttonVariants({ variant: "outline" })}>

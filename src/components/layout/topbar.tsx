@@ -1,5 +1,6 @@
 "use client";
 
+import { CURRENCY } from "@/lib/constants";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import NumberFlow from "@number-flow/react";
@@ -75,7 +76,7 @@ export function Topbar({
           <StatChip
             className="hidden h-14 xl:inline-flex"
             value={
-              <NumberFlow value={walletBalance} format={{ style: "currency", currency: "EUR", maximumFractionDigits: 0 }} />
+              <NumberFlow value={walletBalance} format={{ style: "currency", currency: CURRENCY, maximumFractionDigits: 0 }} />
             }
             label="available"
           />

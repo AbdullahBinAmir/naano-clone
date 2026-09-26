@@ -5,7 +5,7 @@
 export type AppRole = "creator" | "brand" | "admin";
 export type PlanTier = "self_serve" | "managed";
 export type CampaignStatus = "draft" | "published" | "closed";
-export type CollaborationStatus = "applied" | "needs_action" | "active" | "declined" | "completed";
+export type CollaborationStatus = "applied" | "needs_action" | "pending_payment" | "active" | "declined" | "completed";
 export type EarningsType = "collaboration_payout" | "affiliate_reward" | "referral_bonus";
 export type EarningsStatus = "pending" | "in_transit" | "available" | "withdrawn";
 export type PayoutMethodType = "bank_transfer" | "stripe_connect";
@@ -95,9 +95,40 @@ export type CollaborationRow = {
   net_payout_to_creator: number;
   next_action_text: string;
   due_date: string | null;
+  /** Set when the brand's Safepay payment for this deal was verified. */
+  funded_at: string | null;
   performance_snapshot: Record<string, unknown>;
   created_at: string;
 }
+
+export type PaymentStatus = "pending" | "paid" | "failed" | "cancelled";
+
+export type PaymentRow = {
+  id: string;
+  collaboration_id: string;
+  brand_profile_id: string;
+  order_id: string;
+  tracker: string | null;
+  price: number;
+  platform_fee: number;
+  gross_amount: number;
+  currency: "USD" | "PKR";
+  status: PaymentStatus;
+  paid_at: string | null;
+  raw: Record<string, unknown>;
+  created_at: string;
+}
+
+export type PaymentEventRow = {
+  id: string;
+  dedupe_key: string;
+  tracker: string | null;
+  source: string;
+  payload: Record<string, unknown>;
+  created_at: string;
+}
+
+export type PlatformSettingsRow = { id: true; fee_percent: number }
 
 export type ConversationRow = {
   id: string;
@@ -215,9 +246,12 @@ export interface Database {
       >;
       collaborations: Table<
         CollaborationRow,
-        Omit<CollaborationRow, "id" | "created_at" | "due_date" | "performance_snapshot"> &
-          Partial<Pick<CollaborationRow, "due_date" | "performance_snapshot">>
+        Omit<CollaborationRow, "id" | "created_at" | "due_date" | "funded_at" | "performance_snapshot"> &
+          Partial<Pick<CollaborationRow, "due_date" | "funded_at" | "performance_snapshot">>
       >;
+      payments: Table<PaymentRow, Omit<PaymentRow, "id" | "created_at" | "paid_at" | "raw" | "status" | "tracker"> & Partial<Pick<PaymentRow, "tracker" | "status" | "raw" | "paid_at">>>;
+      payment_events: Table<PaymentEventRow, Omit<PaymentEventRow, "id" | "created_at">>;
+      platform_settings: Table<PlatformSettingsRow, PlatformSettingsRow>;
       conversations: Table<ConversationRow, Partial<Omit<ConversationRow, "id" | "created_at">>>;
       conversation_participants: Table<ConversationParticipantRow, ConversationParticipantRow>;
       messages: Table<MessageRow, Omit<MessageRow, "id" | "created_at">>;
@@ -266,6 +300,10 @@ export interface Database {
       };
       activate_referrals_for_completed_collaboration: {
         Args: { p_collaboration_id: string };
+        Returns: void;
+      };
+      apply_payment_success: {
+        Args: { p_tracker: string; p_amount: number; p_currency: string; p_payload: Record<string, unknown> };
         Returns: void;
       };
       update_collaboration_status: {

@@ -178,7 +178,7 @@ export function MyCardForm({ profile, card }: { profile: CreatorProfile; card: C
               }
             />
           </Field>
-          <Field label="Price per post (EUR)">
+          <Field label="Price per post (USD)">
             <input
               type="number"
               className="input"

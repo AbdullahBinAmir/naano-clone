@@ -1,5 +1,6 @@
 "use client";
 
+import { CURRENCY } from "@/lib/constants";
 import * as React from "react";
 import NumberFlow from "@number-flow/react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -44,7 +45,7 @@ export function ResultsShowcase() {
     { label: "Impressions", value: impressions, format: { notation: "compact", maximumFractionDigits: 1 } as const },
     { label: "Engagement rate", value: brand.engagementRate / 100, format: { style: "percent", maximumFractionDigits: 1 } as const },
     { label: "Link clicks", value: clicks, format: { notation: "compact", maximumFractionDigits: 1 } as const },
-    { label: "Cost per 1K", value: cpm, format: { style: "currency", currency: "EUR", maximumFractionDigits: 2 } as const },
+    { label: "Cost per 1K", value: cpm, format: { style: "currency", currency: CURRENCY, maximumFractionDigits: 2 } as const },
   ];
 
   return (

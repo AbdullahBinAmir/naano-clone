@@ -187,7 +187,7 @@ export function FinalCta() {
             <span className="block text-white">someone on LinkedIn.</span>
           </h2>
           <p className="mt-6 max-w-lg text-lg text-white/85">
-            Pay per post, no retainers. Self-serve is €0 a month — creators set their own price, you only pay for what you book.
+            Pay per post, no retainers. Self-serve is $0 a month — creators set their own price, you only pay for what you book.
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-4">
             <Link href="/sign-up" className={heroPill}>

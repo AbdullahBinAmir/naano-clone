@@ -11,14 +11,14 @@ export const metadata: Metadata = { title: "Pricing", description: "Simple prici
 const PLANS = [
   {
     name: "Self-Serve",
-    price: "€0",
+    price: "$0",
     period: "/month + per-post spend",
     description: "Set your own filters, book directly, pay a flat fee per post.",
     features: ["Full creator directory access", "Direct booking, no middleman", "Per-post, per-creator click tracking", "Pay only for posts you book"],
   },
   {
     name: "Managed",
-    price: "€700",
+    price: "$700",
     period: "/month",
     description: "Full-service matching, briefing and campaign management.",
     features: ["Dedicated campaign manager", "Creator sourcing & vetting", "Brief writing support", "Monthly performance reporting"],

@@ -7,11 +7,12 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { requireProfile } from "@/lib/auth/require-profile";
 import { createClient } from "@/lib/supabase/server";
 import { getBrandDeals, type BoardDeal } from "@/lib/brand/get-brand-deals";
+import type { PaymentRow } from "@/types/database";
 import { formatCurrency } from "@/lib/utils";
 
 const PLANS = [
-  { key: "self_serve", name: "Self-Serve", price: "€0/mo + per-post spend", description: "Set your own filters, book directly, pay per post." },
-  { key: "managed", name: "Managed", price: "€700/mo", description: "Full-service matching, briefing and campaign management." },
+  { key: "self_serve", name: "Self-Serve", price: "$0/mo + per-post spend", description: "Set your own filters, book directly, pay per post." },
+  { key: "managed", name: "Managed", price: "$700/mo", description: "Full-service matching, briefing and campaign management." },
 ] as const;
 
 const STATUS_VARIANT = { active: "accent", completed: "success" } as const;
@@ -20,10 +21,14 @@ export default async function BillingPage() {
   const { user } = await requireProfile("brand");
   const supabase = await createClient();
 
-  const [{ data: brand }, deals] = await Promise.all([
+  const [{ data: brand }, deals, { data: payments }] = await Promise.all([
     supabase.from("brand_profiles").select("plan_tier").eq("profile_id", user.id).maybeSingle(),
     getBrandDeals(supabase, user.id),
+    supabase.from("payments").select("*").eq("brand_profile_id", user.id).eq("status", "paid").order("paid_at", { ascending: false }),
   ]);
+  const sandbox = process.env.SAFEPAY_ENV !== "production";
+  const titleByCollab = new Map(deals.map((d) => [d.id, d.campaignTitle]));
+  const totalPaid = (payments ?? []).reduce((acc, p) => acc + Number(p.gross_amount), 0);
   const planTier = brand?.plan_tier ?? "self_serve";
 
   // Bookings the brand has committed to. There is no payment record yet, so
@@ -37,7 +42,6 @@ export default async function BillingPage() {
       return c.getUTCFullYear() === now.getUTCFullYear() && c.getUTCMonth() === now.getUTCMonth();
     })
     .reduce((acc, d) => acc + d.agreedPrice, 0);
-  const completed = bookings.filter((d) => d.status === "completed").length;
 
   const columns: Column<BoardDeal>[] = [
     { header: "Creator", cell: (d) => <span className="font-medium">{d.creator.name}</span> },
@@ -56,13 +60,17 @@ export default async function BillingPage() {
     <>
       <PageHeader eyebrow="Billing" title="Billing" description="Your plan, what you've booked, and your payment method." />
 
-      <TestModeNotice>Bookings here are agreed values only — nothing is charged and no invoices are issued yet.</TestModeNotice>
+      {sandbox && (
+        <TestModeNotice>
+          Payments run in Safepay&apos;s sandbox — use Safepay&apos;s test cards. No real money is charged.
+        </TestModeNotice>
+      )}
 
       <div className="grid gap-4 md:grid-cols-3">
         {[
           { label: "Total booked", value: formatCurrency(total), caption: `${bookings.length} active or completed ${bookings.length === 1 ? "deal" : "deals"}` },
           { label: "Booked this month", value: formatCurrency(thisMonth), caption: "Deals started in the current month" },
-          { label: "Completed", value: String(completed), caption: "Posts delivered by creators" },
+          { label: "Paid to date", value: formatCurrency(totalPaid), caption: `${(payments ?? []).length} ${(payments ?? []).length === 1 ? "payment" : "payments"} incl. platform fee` },
         ].map((t) => (
           <Card key={t.label} padding="lg">
             <p className="text-[13px] text-foreground-muted">{t.label}</p>
@@ -100,9 +108,35 @@ export default async function BillingPage() {
         </span>
         <div>
           <p className="font-medium">Payment method</p>
-          <p className="text-sm text-foreground-muted">None on file — card payments aren&apos;t enabled yet, so no charges are made.</p>
+          <p className="text-sm text-foreground-muted">
+            You pay per deal through Safepay&apos;s secure checkout once a creator is accepted — no card is stored here.
+          </p>
         </div>
       </Card>
+
+      <section aria-labelledby="payments-title" className="flex flex-col gap-3">
+        <CardTitle id="payments-title" className="text-2xl">
+          Payments
+        </CardTitle>
+        <DataTable
+          columns={[
+            { header: "Date", cell: (p: PaymentRow) => (p.paid_at ? new Date(p.paid_at).toLocaleDateString() : "—") },
+            { header: "Campaign", cell: (p: PaymentRow) => <span className="text-foreground-muted">{titleByCollab.get(p.collaboration_id) ?? "Deal"}</span> },
+            { header: "Creator price", cell: (p: PaymentRow) => formatCurrency(Number(p.price), p.currency) },
+            { header: "Platform fee", cell: (p: PaymentRow) => formatCurrency(Number(p.platform_fee), p.currency) },
+            { header: "Total", cell: (p: PaymentRow) => <span className="font-medium">{formatCurrency(Number(p.gross_amount), p.currency)}</span>, className: "text-right" },
+          ]}
+          rows={payments ?? []}
+          rowKey={(p: PaymentRow) => p.id}
+          emptyState={
+            <div className="flex flex-col items-center gap-2 text-foreground-muted">
+              <Receipt className="h-6 w-6 text-foreground-subtle" strokeWidth={1.5} />
+              <p className="font-medium text-foreground">No payments yet</p>
+              <p className="text-sm">When you pay for an accepted deal, the receipt shows up here.</p>
+            </div>
+          }
+        />
+      </section>
 
       <section aria-labelledby="history-title" className="flex flex-col gap-3">
         <CardTitle id="history-title" className="text-2xl">

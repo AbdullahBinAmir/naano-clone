@@ -296,7 +296,7 @@ async function ensureCollaboration({ creatorKey, brandKey, action, campaignKey, 
       .single();
     if (error) throw new Error(`collaboration ${creatorKey}/${brandKey}: ${error.message}`);
     collab = inserted;
-    console.log(`  created collaboration ${creatorKey} x ${brandKey} (${campaignTitle}, €${price}, ${status})`);
+    console.log(`  created collaboration ${creatorKey} x ${brandKey} (${campaignTitle}, $${price}, ${status})`);
     await seedConversation(creatorKey, brandKey, collab.id);
   } else {
     console.log(`  collaboration ${creatorKey} x ${brandKey} already exists (status=${collab.status})`);
@@ -323,6 +323,7 @@ async function ensureCollaboration({ creatorKey, brandKey, action, campaignKey, 
       continue;
     }
     console.log(`    -> ${t.action} (by ${t.by === creator ? creatorKey : brandKey})`);
+    if (t.action === "accept") await fundSeededDeal(collab.id);
     if (t.action === "complete") {
       const { error: payoutError } = await creator.client.rpc("record_collaboration_payout", { p_collaboration_id: collab.id });
       if (payoutError) console.log(`    payout skipped: ${payoutError.message}`);
@@ -333,6 +334,25 @@ async function ensureCollaboration({ creatorKey, brandKey, action, campaignKey, 
     }
   }
   return collab.id;
+}
+
+// Accepting a deal now leaves it "pending_payment" until the brand pays through
+// Safepay. Seed data has no real payment, so if a service-role key is available
+// (SUPABASE_SECRET_KEY in .env.local) the deal is marked funded directly; without
+// it the seeded deals simply stay awaiting payment.
+async function fundSeededDeal(collaborationId) {
+  const secret = env.SUPABASE_SECRET_KEY;
+  if (!secret) {
+    console.log("    (no SUPABASE_SECRET_KEY — deal left awaiting payment)");
+    return;
+  }
+  const admin = createClient(SUPABASE_URL, secret, { auth: { persistSession: false } });
+  const { error } = await admin
+    .from("collaborations")
+    .update({ status: "active", funded_at: new Date().toISOString(), next_action_text: "Publish your post" })
+    .eq("id", collaborationId)
+    .eq("status", "pending_payment");
+  if (error) console.log(`    funding skipped: ${error.message}`);
 }
 
 async function seedAnalytics(key, months) {
@@ -565,7 +585,7 @@ async function main() {
   if (settleError) console.log(`  settle skipped: ${settleError.message}`);
   const { error: withdrawError } = await people.alexis.client.rpc("request_withdrawal", { p_amount: 1500 });
   if (withdrawError) console.log(`  withdrawal skipped: ${withdrawError.message}`);
-  else console.log("  withdrew €1500 for alexis");
+  else console.log("  withdrew $1500 for alexis");
 
   console.log("\n=== Done ===");
   console.log(`All accounts use password: ${PASSWORD}`);

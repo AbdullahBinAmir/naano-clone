@@ -3,8 +3,10 @@ import { DealBoard } from "@/components/brand/board/deal-board";
 import { requireProfile } from "@/lib/auth/require-profile";
 import { createClient } from "@/lib/supabase/server";
 import { getBrandDeals } from "@/lib/brand/get-brand-deals";
+import { PaymentReturnToast } from "@/components/brand/payment-return-toast";
 
-export default async function BrandCollaborationsPage() {
+export default async function BrandCollaborationsPage({ searchParams }: { searchParams: Promise<{ payment?: string }> }) {
+  const { payment } = await searchParams;
   const { user } = await requireProfile("brand");
   const supabase = await createClient();
   const deals = await getBrandDeals(supabase, user.id);
@@ -14,8 +16,9 @@ export default async function BrandCollaborationsPage() {
       <PageHeader
         eyebrow="Collaborations"
         title="Deal board"
-        description="Every deal by stage. Drag a pitch to Active to accept it, or to Declined — later stages move when the creator acts."
+        description="Every deal by stage. Drag a pitch to Awaiting payment to accept it, then pay to start the work — later stages move when the creator acts."
       />
+      <PaymentReturnToast state={payment ?? null} />
       <DealBoard deals={deals} />
     </>
   );

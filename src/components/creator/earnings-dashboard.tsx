@@ -1,5 +1,6 @@
 "use client";
 
+import { CURRENCY } from "@/lib/constants";
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import NumberFlow from "@number-flow/react";
@@ -25,7 +26,7 @@ import { cn, formatCurrency } from "@/lib/utils";
 import type { EarningsSummary, StatementLine } from "@/lib/earnings/get-earnings-summary";
 import type { EarningsStatus } from "@/types/database";
 
-const EUR = { style: "currency", currency: "EUR", maximumFractionDigits: 0 } as const;
+const MONEY = { style: "currency", currency: CURRENCY, maximumFractionDigits: 0 } as const;
 
 const STATUS_META: Record<EarningsStatus, { label: string; variant: "neutral" | "warning" | "success" }> = {
   pending: { label: "Pending", variant: "neutral" },
@@ -206,7 +207,7 @@ export function EarningsDashboard({ statement, payoutMethods, monthly, totals }:
             <Card padding="lg">
               <p className="text-[13px] text-foreground-muted">Total earned</p>
               <p className="mt-2 text-4xl font-semibold tracking-tight">
-                <NumberFlow value={totals.totalEarned} format={EUR} />
+                <NumberFlow value={totals.totalEarned} format={MONEY} />
               </p>
               <p className="mt-2 text-[13px] text-foreground-muted">
                 {totals.paidCollaborations} paid {totals.paidCollaborations === 1 ? "collaboration" : "collaborations"}
@@ -217,7 +218,7 @@ export function EarningsDashboard({ statement, payoutMethods, monthly, totals }:
             <Card padding="lg">
               <p className="text-[13px] text-foreground-muted">In transit</p>
               <p className="mt-2 text-4xl font-semibold tracking-tight">
-                <NumberFlow value={totals.inTransit} format={EUR} />
+                <NumberFlow value={totals.inTransit} format={MONEY} />
               </p>
               <p className="mt-2 text-[13px] text-foreground-muted">
                 Moves to Available shortly after a collaboration is marked posted (simulated settlement).
@@ -240,7 +241,7 @@ export function EarningsDashboard({ statement, payoutMethods, monthly, totals }:
 
         <aside className="flex min-w-0 flex-col gap-6">
           <GradientStatCard
-            value={<NumberFlow value={totals.available} format={EUR} />}
+            value={<NumberFlow value={totals.available} format={MONEY} />}
             label="Available to withdraw"
           />
 
@@ -311,8 +312,8 @@ export function EarningsDashboard({ statement, payoutMethods, monthly, totals }:
             <div className="flex gap-2 border-t border-border pt-4">
               <input
                 className="input"
-                aria-label="Amount to withdraw (EUR)"
-                placeholder="Amount (EUR)"
+                aria-label="Amount to withdraw (USD)"
+                placeholder="Amount (USD)"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 inputMode="decimal"

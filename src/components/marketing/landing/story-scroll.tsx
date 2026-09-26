@@ -92,7 +92,7 @@ const FIT = [96, 91, 87];
 
 function MatchMock({ creators }: { creators: ShowcaseCreatorWithPhoto[] }) {
   const [filter, setFilter] = React.useState(0);
-  const filters = ["10K+ followers", "Under €1,000", "Directors & VPs"];
+  const filters = ["10K+ followers", "Under $1,000", "Directors & VPs"];
   const rows = (
     creators.length >= 3
       ? creators.slice(0, 3).map((c) => ({ name: c.name, headline: c.headline, followers: c.followers, price: c.pricePerPost, src: c.avatarUrl }))

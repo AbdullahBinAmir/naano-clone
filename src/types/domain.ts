@@ -64,6 +64,7 @@ export interface Campaign {
 export type CollaborationStatus =
   | "applied"
   | "needs_action"
+  | "pending_payment"
   | "active"
   | "declined"
   | "completed";

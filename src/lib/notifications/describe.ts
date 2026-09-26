@@ -40,7 +40,7 @@ export function describeNotification(row: NotificationRow, role: "creator" | "br
       break;
     case "offer_received":
       title = `${str(p.brand_name, "A brand")} sent you an offer`;
-      body = typeof p.price === "number" ? `€${p.price.toLocaleString("en-US")} · ${campaign}` : campaign;
+      body = typeof p.price === "number" ? `$${p.price.toLocaleString("en-US")} · ${campaign}` : campaign;
       break;
     case "collaboration_accepted":
       title = role === "brand" ? `${str(p.creator_name, "The creator")} accepted your offer` : `${str(p.brand_name, "The brand")} accepted your application`;
@@ -53,6 +53,14 @@ export function describeNotification(row: NotificationRow, role: "creator" | "br
     case "collaboration_completed":
       title = `${str(p.creator_name, "The creator")} marked a post as published`;
       body = campaign;
+      break;
+    case "payment_required":
+      title = "A deal is waiting for your payment";
+      body = campaign;
+      break;
+    case "deal_funded":
+      title = `${str(p.brand_name, "The brand")} funded your deal`;
+      body = typeof p.price === "number" ? `You can start work · $${p.price.toLocaleString("en-US")} · ${campaign}` : `You can start work · ${campaign}`;
       break;
     case "new_message":
       title = `New message from ${str(p.sender_name, "someone")}`;

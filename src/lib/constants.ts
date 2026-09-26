@@ -24,5 +24,8 @@ export const BRAND_NAV = [
 
 export const MARKETPLACE_FOLLOWER_THRESHOLD = 1000;
 
+/** The single currency the product prices and charges in (Safepay supports PKR and USD). */
+export const CURRENCY = "USD";
+
 /** Public Supabase Storage bucket for avatars, card banners and brand logos (migration 0017). */
 export const PROFILE_IMAGES_BUCKET = "profile-images";

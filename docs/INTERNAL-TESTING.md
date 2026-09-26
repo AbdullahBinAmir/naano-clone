@@ -1,13 +1,13 @@
 # Internal testing guide
 
-This build is for internal testers. **All money is simulated** — earnings,
-withdrawals and billing figures are database records; nothing is charged or paid
-out. Pages that show money carry a "Test mode" notice.
+This build is for internal testers. Brands pay accepted deals through **Safepay's sandbox** (test cards, no real money). Creator earnings and withdrawals are still
+simulated ledger records — nothing is paid out to a real bank account. Pages that
+show money carry a "Test mode" notice.
 
 ## Before you start
 
 The database must have every migration in `supabase/migrations/` applied,
-in order (`0015_notifications.sql` powers the notification bell; `0016_security_hardening.sql` closes the audit findings; `0017_profile_images_storage.sql` creates the image bucket for avatar, banner and logo uploads; `0018_campaign_delete.sql` lets brands delete unused briefs).
+in order (`0015_notifications.sql` powers the notification bell; `0016_security_hardening.sql` closes the audit findings; `0017_profile_images_storage.sql` creates the image bucket for avatar, banner and logo uploads; `0018_campaign_delete.sql` lets brands delete unused briefs; `0019` then `0020` — run them one at a time, in that order — add the Safepay payment flow).
 Supabase auth redirect URLs must include `<site>/auth/callback`.
 
 ## Test accounts
@@ -47,7 +47,8 @@ mobile layout (sidebar becomes a drawer).
 
 ## Known limitations
 
-- Payments are not connected. Earnings, withdrawals and billing are simulated ledger entries.
+- Brand payments use Safepay sandbox. Creator earnings, withdrawals and payout are simulated ledger entries; there is no post-approval or refund step yet.
+- Accepting a deal now moves it to "Awaiting payment"; the brand pays from the Deal board. The seed script funds seeded deals directly only if `SUPABASE_SECRET_KEY` is set.
 - Briefs can be deleted only while nobody has applied; after that they can only be closed.
 - Creators can't change their public handle.
 - On the marketing landing page, creators without an uploaded photo are shown with stock portraits (Unsplash); an uploaded profile photo always replaces it. Dashboards show initials until a photo is uploaded.

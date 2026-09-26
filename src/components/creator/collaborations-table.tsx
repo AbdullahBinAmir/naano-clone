@@ -17,6 +17,7 @@ const TABS: { key: "all" | CollaborationStatus; label: string }[] = [
   { key: "all", label: "All" },
   { key: "active", label: "Active" },
   { key: "needs_action", label: "Needs action" },
+  { key: "pending_payment", label: "Awaiting payment" },
   { key: "applied", label: "Applications sent" },
   { key: "declined", label: "Declined" },
   { key: "completed", label: "Completed" },
@@ -25,6 +26,7 @@ const TABS: { key: "all" | CollaborationStatus; label: string }[] = [
 const STATUS_VARIANT: Record<CollaborationStatus, "neutral" | "accent" | "success" | "warning" | "danger"> = {
   applied: "neutral",
   needs_action: "warning",
+  pending_payment: "warning",
   active: "accent",
   declined: "danger",
   completed: "success",
@@ -33,6 +35,7 @@ const STATUS_VARIANT: Record<CollaborationStatus, "neutral" | "accent" | "succes
 const STATUS_LABEL: Record<CollaborationStatus, string> = {
   applied: "Applied",
   needs_action: "Needs action",
+  pending_payment: "Awaiting payment",
   active: "Active",
   declined: "Declined",
   completed: "Completed",
