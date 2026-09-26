@@ -7,47 +7,19 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { BookPostButton, type BookingMode } from "@/components/creator/book-post-button";
 import { LogCardVisit } from "@/components/creator/log-card-visit";
-import { getDemoCreatorByHandle } from "@/lib/demo-data";
-import { analyticsByCreator, linkedinPostsByCreator } from "@/lib/demo-data/analytics";
-import { creatorProfiles } from "@/lib/demo-data/creators";
 import { createClient } from "@/lib/supabase/server";
 import { rowToCreatorCard, rowToCreatorProfile } from "@/lib/mappers/creator";
 import { formatCompactNumber, formatCurrency, initials } from "@/lib/utils";
 import type { CreatorCard, CreatorProfile } from "@/types/domain";
 import type { LinkedinPostRow } from "@/types/database";
 
-// Demo personas (alexis-jarre, marcus-oduya, juliette-caron) linked from the
-// marketing homepage don't exist as real Supabase rows — this map keeps
-// those illustrative links working while real, published creator cards are
-// served from the database.
-const AUDIENCE_SENIORITY: Record<string, { label: string; pct: number }[]> = {
-  alexis: [
-    { label: "Manager", pct: 22 },
-    { label: "Director", pct: 34 },
-    { label: "VP", pct: 26 },
-    { label: "C-level", pct: 18 },
-  ],
-  marcus: [
-    { label: "Manager", pct: 38 },
-    { label: "Director", pct: 31 },
-    { label: "VP", pct: 21 },
-    { label: "C-level", pct: 10 },
-  ],
-  juliette: [
-    { label: "IC", pct: 60 },
-    { label: "Manager", pct: 28 },
-    { label: "Director", pct: 12 },
-  ],
-};
-
 interface ViewModel {
   profile: CreatorProfile;
   card: CreatorCard;
-  cardId: string | null; // real creator_cards.id, for visit logging — null for demo fallback rows
+  cardId: string; // creator_cards.id, for visit logging
   publicPostReach: number | null;
   publicEngagements: number;
   posts: { id: string; originalPostUrl: string; postedAt: string }[];
-  seniority: { label: string; pct: number }[];
 }
 
 async function loadRealCreator(handle: string): Promise<ViewModel | null> {
@@ -90,37 +62,10 @@ async function loadRealCreator(handle: string): Promise<ViewModel | null> {
       originalPostUrl: p.original_post_url,
       postedAt: p.posted_at,
     })),
-    // No real backing table for this yet — real creators just don't show
-    // the section (see the render logic below), rather than faking numbers.
-    seniority: [],
-  };
-}
-
-async function loadDemoCreator(handle: string): Promise<ViewModel | null> {
-  const result = await getDemoCreatorByHandle(handle);
-  if (!result) return null;
-
-  const key = (Object.keys(creatorProfiles) as (keyof typeof creatorProfiles)[]).find(
-    (k) => creatorProfiles[k].handle === handle,
-  )!;
-  const analytics = analyticsByCreator[key];
-  const posts = linkedinPostsByCreator[key];
-
-  return {
-    profile: result.profile,
-    card: result.card,
-    cardId: null,
-    publicPostReach: analytics.publicPostReach,
-    publicEngagements: analytics.publicEngagements,
-    posts: posts.map((p) => ({ id: p.id, originalPostUrl: p.originalPostUrl, postedAt: p.postedAt })),
-    seniority: AUDIENCE_SENIORITY[key] ?? [],
   };
 }
 
 async function resolveBookingMode(handle: string, vm: ViewModel): Promise<BookingMode> {
-  // Demo-fallback profiles have no real account behind them, so nothing to book.
-  if (!vm.cardId) return { kind: "unavailable" };
-
   const supabase = await createClient();
   const {
     data: { user },
@@ -143,15 +88,15 @@ async function resolveBookingMode(handle: string, vm: ViewModel): Promise<Bookin
 
 export default async function PublicCreatorCardPage({ params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
-  const vm = (await loadRealCreator(handle)) ?? (await loadDemoCreator(handle));
+  const vm = await loadRealCreator(handle);
   if (!vm) notFound();
 
   const bookingMode = await resolveBookingMode(handle, vm);
-  const { profile, card, cardId, publicPostReach, publicEngagements, posts, seniority } = vm;
+  const { profile, card, cardId, publicPostReach, publicEngagements, posts } = vm;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
-      {cardId && <LogCardVisit cardId={cardId} />}
+      <LogCardVisit cardId={cardId} />
 
       <Link href="/" className="mb-8 inline-flex items-center gap-2 text-sm text-foreground-muted hover:text-foreground">
         <span className="flex h-6 w-6 items-center justify-center rounded bg-accent text-xs font-bold text-accent-foreground">
@@ -209,25 +154,6 @@ export default async function PublicCreatorCardPage({ params }: { params: Promis
             <h2 className="text-lg font-semibold">About</h2>
             <p className="mt-2 text-foreground-muted">{profile.bio || "This creator hasn't added a bio yet."}</p>
           </Card>
-
-          {seniority.length > 0 && (
-            <Card>
-              <h2 className="text-lg font-semibold">Audience seniority</h2>
-              <div className="mt-4 flex flex-col gap-3">
-                {seniority.map((s) => (
-                  <div key={s.label}>
-                    <div className="mb-1 flex items-center justify-between text-sm">
-                      <span className="text-foreground-muted">{s.label}</span>
-                      <span className="font-medium">{s.pct}%</span>
-                    </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
-                      <div className="h-full rounded-full bg-accent" style={{ width: `${s.pct}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
 
           <Card>
             <h2 className="text-lg font-semibold">Sample posts</h2>

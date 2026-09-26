@@ -1,7 +1,6 @@
 import { BarChart3, Handshake, Megaphone, MessageCircle, Users, type LucideIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { cn, formatCompactNumber, initials } from "@/lib/utils";
-import type { ShowcaseCreator } from "@/lib/marketing/get-landing-data";
 
 type Slot =
   | { ring: 0 | 1 | 2; angle: number; kind: "creator"; index: number; size: string }
@@ -29,18 +28,10 @@ const SLOTS: Slot[] = [
   { ring: 2, angle: 55, kind: "tile", icon: Users, glow: "#A855F7", label: "Audience", tilt: 8 },
 ];
 
-const PASTELS = [
-  "bg-[#FDE4CF] text-[#7A3E12]",
-  "bg-[#D7E6FF] text-[#1E3F8A]",
-  "bg-[#FBD3E6] text-[#8A1E55]",
-  "bg-[#D5F3E1] text-[#14603A]",
-  "bg-[#FFF0B8] text-[#7A5A00]",
-];
-
 const spinCw = (s: number) => ({ animation: `orbit-spin ${s}s linear infinite` });
 const spinCcw = (s: number) => ({ animation: `orbit-spin ${s}s linear infinite reverse` });
 
-export function HeroOrbit({ creators, creatorCount }: { creators: ShowcaseCreator[]; creatorCount: number }) {
+export function HeroOrbit({ avatars, creatorCount }: { avatars: { src: string; name: string }[]; creatorCount: number }) {
   return (
     <div className="relative mx-auto aspect-square w-full max-w-[40rem]" role="img" aria-label={`${creatorCount} LinkedIn creators on Naano`}>
       {/* rings */}
@@ -74,7 +65,7 @@ export function HeroOrbit({ creators, creatorCount }: { creators: ShowcaseCreato
           style={{ width: r.size, height: r.size, ...(r.reverse ? spinCcw(r.seconds) : spinCw(r.seconds)) }}
         >
           {SLOTS.filter((s) => s.ring === ringIndex).map((slot, i) => {
-            const creator = slot.kind === "creator" ? creators[slot.index] : undefined;
+            const creator = slot.kind === "creator" ? avatars[slot.index] : undefined;
             if (slot.kind === "creator" && !creator) return null;
             const rad = (slot.angle * Math.PI) / 180;
             return (
@@ -89,14 +80,10 @@ export function HeroOrbit({ creators, creatorCount }: { creators: ShowcaseCreato
                 >
                   {slot.kind === "creator" && creator ? (
                     <Avatar
-                      src={creator.avatarUrl}
+                      src={creator.src}
                       alt={creator.name}
                       fallback={initials(creator.name)}
-                      className={cn(
-                        "border-2 border-white font-semibold shadow-[0_0_28px_rgba(255,255,255,0.35)]",
-                        PASTELS[slot.index % PASTELS.length],
-                        slot.size,
-                      )}
+                      className={cn("border-[3px] border-white shadow-[0_0_28px_rgba(255,255,255,0.35)]", slot.size)}
                     />
                   ) : slot.kind === "tile" ? (
                     <span
@@ -117,7 +104,7 @@ export function HeroOrbit({ creators, creatorCount }: { creators: ShowcaseCreato
 }
 
 /** Small "who's looking" tag beside the CTA; only shown when there is a real creator to name. */
-export function CursorTag({ creator }: { creator: ShowcaseCreator | undefined }) {
+export function CursorTag({ creator }: { creator: { name: string; followers: number } | undefined }) {
   if (!creator) return null;
   const first = creator.name.split(" ")[0];
   return (

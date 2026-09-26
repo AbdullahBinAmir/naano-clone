@@ -50,10 +50,9 @@ mobile layout (sidebar becomes a drawer).
 - Payments are not connected. Earnings, withdrawals and billing are simulated ledger entries.
 - Briefs can be closed but not deleted (no delete policy in the database).
 - Creators can't change their public handle.
-- No image upload — avatars and banners show initials/gradients.
+- No image upload yet. On the marketing landing page, creators without an avatar are shown with stock portraits (Unsplash) — a real avatar always replaces it. Dashboards still show initials.
+- The landing page's sample brands and campaign figures are fictional, static illustrations.
 - The French language switcher and notification preferences are not implemented.
-- The public card page still falls back to a few illustrative demo profiles
-  (`/creators/juliette-caron` etc.) for handles not found in the database.
 - Notifications only exist for events after migration `0015` was applied.
 
 ## Reporting a bug

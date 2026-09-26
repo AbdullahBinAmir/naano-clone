@@ -1,11 +1,9 @@
 "use client";
 
-import { toast } from "sonner";
-import { CheckCircle2, ExternalLink, Share2 } from "lucide-react";
+import { CheckCircle2, Share2 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { CreatorCardPreview } from "@/components/creator/creator-card-preview";
 import type { CreatorCard, CreatorProfile } from "@/types/domain";
 
@@ -51,14 +49,6 @@ export function CommunityDashboard({
               ),
             )}
           </ul>
-          <Button
-            variant="glass"
-            className="justify-between"
-            onClick={() => toast("The Slack community link isn't public in this demo.")}
-          >
-            Join the Slack community
-            <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.75} />
-          </Button>
         </Card>
 
         <Card className="flex flex-col gap-4">

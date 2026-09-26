@@ -12,8 +12,7 @@ export type BookingMode =
   | { kind: "signed-out"; signInHref: string }
   | { kind: "brand"; creatorProfileId: string; alreadyOffered: boolean }
   | { kind: "own" }
-  | { kind: "creator" }
-  | { kind: "unavailable" };
+  | { kind: "creator" };
 
 const big = "w-full";
 
@@ -46,13 +45,6 @@ export function BookPostButton({
   }
   if (mode.kind === "creator") {
     return <p className="text-center text-sm text-foreground-muted">Only brands can book posts.</p>;
-  }
-  if (mode.kind === "unavailable") {
-    return (
-      <Button variant="primary" size="lg" className={big} disabled>
-        Booking unavailable
-      </Button>
-    );
   }
 
   if (offered) {

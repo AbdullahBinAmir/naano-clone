@@ -44,7 +44,7 @@ export default function OnboardingPage() {
     <div className="flex flex-col gap-6">
       <div className="text-center">
         <h1 className="text-xl font-semibold">How will you use Naano?</h1>
-        <p className="mt-1 text-sm text-foreground-muted">This can&apos;t be changed later in this demo.</p>
+        <p className="mt-1 text-sm text-foreground-muted">You can&apos;t switch roles later — use a separate account for the other side.</p>
       </div>
       <div className="flex flex-col gap-4">
         {ROLES.map((r) => (

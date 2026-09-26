@@ -2,9 +2,14 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { LandingHeader, heroPill } from "@/components/marketing/landing/landing-header";
 import { CursorTag, HeroOrbit } from "@/components/marketing/landing/hero-orbit";
-import { CreatorShowcase, HowItWorks, PricingTeaser, TrustedBy } from "@/components/marketing/landing/landing-sections";
+import { AudienceSplit, CreatorShowcase, FinalCta } from "@/components/marketing/landing/landing-sections";
+import { BrandMarquee } from "@/components/marketing/landing/brand-marquee";
+import { BrandShowcase } from "@/components/marketing/landing/brand-showcase";
+import { ResultsShowcase } from "@/components/marketing/landing/results-showcase";
+import { StoryScroll } from "@/components/marketing/landing/story-scroll";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { getLandingData } from "@/lib/marketing/get-landing-data";
+import { orbitAvatars, withPortraits } from "@/lib/marketing/landing-photos";
 
 export const revalidate = 300;
 
@@ -16,7 +21,9 @@ const HERO_BACKGROUND = [
 ].join(", ");
 
 export default async function MarketingHomePage() {
-  const { creators, creatorCount, brandNames } = await getLandingData();
+  const data = await getLandingData();
+  const creators = withPortraits(data.creators);
+  const creatorCount = data.creatorCount;
 
   return (
     <div className="flex min-h-svh flex-col bg-base">
@@ -42,17 +49,20 @@ export default async function MarketingHomePage() {
               <CursorTag creator={creators[0]} />
             </div>
           </div>
-          <HeroOrbit creators={creators} creatorCount={creatorCount} />
+          <HeroOrbit avatars={orbitAvatars(creators, 5)} creatorCount={creatorCount} />
         </section>
-        <TrustedBy brands={brandNames} />
+        <BrandMarquee />
       </div>
 
       <main>
-        <HowItWorks />
+        <BrandShowcase />
+        <StoryScroll creators={creators} />
+        <ResultsShowcase />
+        <AudienceSplit />
         <CreatorShowcase creators={creators} creatorCount={creatorCount} />
-        <PricingTeaser />
+        <FinalCta />
       </main>
-      <MarketingFooter />
+      <MarketingFooter wide />
     </div>
   );
 }

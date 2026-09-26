@@ -17,17 +17,14 @@ export interface LandingData {
   creators: ShowcaseCreator[];
   /** Every marketplace-visible creator, not just the ones shown. */
   creatorCount: number;
-  /** Brands with a published campaign (the only brands the public can read). */
-  brandNames: string[];
 }
 
 const SHOWCASE_LIMIT = 12;
 
 /**
  * Public landing data, read with the anon key so it only sees what RLS lets an
- * anonymous visitor see: marketplace-visible creators with a published card,
- * and brands with a published campaign. Cookie-free on purpose so the result
- * can be cached and shared across visitors.
+ * anonymous visitor see: marketplace-visible creators with a published card.
+ * Cookie-free on purpose so the result can be cached and shared across visitors.
  */
 async function fetchLandingData(): Promise<LandingData> {
   const supabase = createClient<Database>(
@@ -36,14 +33,11 @@ async function fetchLandingData(): Promise<LandingData> {
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
 
-  const [{ data: creators, count }, { data: brands }] = await Promise.all([
-    supabase
-      .from("marketplace_creators")
-      .select("profile_id, handle, display_name, avatar_url, headline, category_tags, follower_count", { count: "exact" })
-      .order("follower_count", { ascending: false })
-      .limit(SHOWCASE_LIMIT),
-    supabase.from("brand_profiles").select("company_name").limit(12),
-  ]);
+  const { data: creators, count } = await supabase
+    .from("marketplace_creators")
+    .select("profile_id, handle, display_name, avatar_url, headline, category_tags, follower_count", { count: "exact" })
+    .order("follower_count", { ascending: false })
+    .limit(SHOWCASE_LIMIT);
 
   const ids = (creators ?? []).map((c) => c.profile_id);
   const { data: cards } =
@@ -64,7 +58,6 @@ async function fetchLandingData(): Promise<LandingData> {
       pricePerPost: priceById.get(c.profile_id) ?? 0,
     })),
     creatorCount: count ?? creators?.length ?? 0,
-    brandNames: [...new Set((brands ?? []).map((b) => b.company_name).filter(Boolean))],
   };
 }
 

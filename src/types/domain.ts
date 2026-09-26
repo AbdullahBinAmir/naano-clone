@@ -1,7 +1,4 @@
-// Domain types mirrored 1:1 to the planned Supabase schema (see the plan doc).
-// Phase 1 demo-data accessors return these shapes directly; Phase 2+ Supabase
-// accessors return the same shapes so call sites don't change when the data
-// source is swapped.
+// Domain types mirrored 1:1 to the Supabase schema.
 
 export type Role = "creator" | "brand" | "admin";
 

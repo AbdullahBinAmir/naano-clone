@@ -148,3 +148,15 @@ body {
     transform: translate(10px, -8px);
   }
 }
+
+/* Landing: brand marquee (the list is rendered twice, so -50% loops seamlessly). */
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none !important;
+  }
+}

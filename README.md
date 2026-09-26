@@ -65,6 +65,10 @@ pnpm build   # production build (also typechecks)
 - `docs/design/DESIGN.md` — the design system every screen follows
 - `supabase/migrations/` — schema, RLS and RPCs
 
+## Credits
+
+Landing-page photography in `public/landing/` is from [Unsplash](https://unsplash.com) (Unsplash License).
+
 ## Deploying (Vercel)
 
 Set the two `NEXT_PUBLIC_SUPABASE_*` variables, apply all migrations, and add
