@@ -15,7 +15,8 @@ const PLANS = [
   { key: "managed", name: "Managed", price: "$700/mo", description: "Full-service matching, briefing and campaign management." },
 ] as const;
 
-const STATUS_VARIANT = { active: "accent", completed: "success" } as const;
+const STATUS_VARIANT = { active: "accent", in_review: "warning", completed: "success" } as const;
+const STATUS_LABEL = { active: "Active", in_review: "In review", completed: "Completed" } as const;
 
 export default async function BillingPage() {
   const { user } = await requireProfile("brand");
@@ -33,7 +34,7 @@ export default async function BillingPage() {
 
   // Bookings the brand has committed to. There is no payment record yet, so
   // this is agreed value, not money that has moved.
-  const bookings = deals.filter((d) => d.status === "active" || d.status === "completed");
+  const bookings = deals.filter((d) => d.status === "active" || d.status === "in_review" || d.status === "completed");
   const total = bookings.reduce((acc, d) => acc + d.agreedPrice, 0);
   const now = new Date();
   const thisMonth = bookings
@@ -49,7 +50,7 @@ export default async function BillingPage() {
     {
       header: "Status",
       cell: (d) => (
-        <Badge variant={STATUS_VARIANT[d.status as "active" | "completed"]}>{d.status === "completed" ? "Completed" : "Active"}</Badge>
+        <Badge variant={STATUS_VARIANT[d.status as keyof typeof STATUS_VARIANT]}>{STATUS_LABEL[d.status as keyof typeof STATUS_LABEL]}</Badge>
       ),
     },
     { header: "Booked", cell: (d) => new Date(d.createdAt).toLocaleDateString() },

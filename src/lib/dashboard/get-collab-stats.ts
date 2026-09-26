@@ -27,12 +27,12 @@ export async function getCollabStats(
     .from("collaborations")
     .select("status, brand_name, brand_logo_url, creator_profile_id, brand_profile_id")
     .eq(viewerColumn, userId)
-    .in("status", ["active", "needs_action", "pending_payment"]);
+    .in("status", ["active", "needs_action", "pending_payment", "in_review"]);
 
   const rows = data ?? [];
   const activeRows = rows.filter((r) => r.status === "active");
-  // A brand's next step on an accepted deal is paying for it, so that counts as needing action.
-  const needsAction = rows.filter((r) => r.status === "needs_action" || (role === "brand" && r.status === "pending_payment")).length;
+  // A brand's next step on an accepted deal is paying for it, and so is reviewing a submitted post, so both count as needing action.
+  const needsAction = rows.filter((r) => r.status === "needs_action" || (role === "brand" && (r.status === "pending_payment" || r.status === "in_review"))).length;
 
   const counterparts = new Map<string, { name: string; src: string | null }>();
   if (role === "creator") {

@@ -11,6 +11,22 @@ export const inviteCreatorSchema = z.object({
   agreedPrice: z.number().nonnegative().max(1_000_000),
 });
 
+export const submitPostSchema = z.object({
+  collaborationId: z.string().uuid(),
+  postUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .regex(/^https:\/\/([a-z0-9-]+\.)?linkedin\.com\/.+/i, "Enter the full LinkedIn post URL (https://www.linkedin.com/…)"),
+});
+
+export const requestRevisionSchema = z.object({
+  collaborationId: z.string().uuid(),
+  note: z.string().trim().min(1, "Tell the creator what to change").max(500),
+});
+
+export const collaborationIdSchema = z.object({ collaborationId: z.string().uuid() });
+
 export const collaborationActionSchema = z.object({
   collaborationId: z.string().uuid(),
   action: z.enum(["accept", "decline", "complete"]),

@@ -16,13 +16,15 @@ export interface BoardDeal {
   dueDate: string | null;
   createdAt: string;
   nextActionText: string;
+  /** LinkedIn post the creator submitted for review. */
+  postUrl: string | null;
 }
 
 /** Every collaboration of the signed-in brand, newest first, with the creator's display info. */
 export async function getBrandDeals(supabase: SupabaseClient<Database>, brandId: string): Promise<BoardDeal[]> {
   const { data } = await supabase
     .from("collaborations")
-    .select("id, status, creator_profile_id, campaign_title, agreed_price, due_date, created_at, next_action_text")
+    .select("id, status, creator_profile_id, campaign_title, agreed_price, due_date, created_at, next_action_text, post_url")
     .eq("brand_profile_id", brandId)
     .order("created_at", { ascending: false });
   const rows = data ?? [];
@@ -47,5 +49,6 @@ export async function getBrandDeals(supabase: SupabaseClient<Database>, brandId:
     dueDate: r.due_date,
     createdAt: r.created_at,
     nextActionText: r.next_action_text,
+    postUrl: r.post_url,
   }));
 }

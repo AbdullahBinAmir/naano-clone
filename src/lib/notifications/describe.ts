@@ -54,6 +54,19 @@ export function describeNotification(row: NotificationRow, role: "creator" | "br
       title = `${str(p.creator_name, "The creator")} marked a post as published`;
       body = campaign;
       break;
+    case "post_submitted":
+      title = `${str(p.creator_name, "The creator")} submitted their post`;
+      body = `Review it and approve to release the payout · ${campaign}`;
+      break;
+    case "post_approved":
+      title = `${str(p.brand_name, "The brand")} approved your post`;
+      body = typeof p.price === "number" ? `$${p.price.toLocaleString("en-US")} added to your balance · ${campaign}` : campaign;
+      href = "/dashboard/creator/earnings";
+      break;
+    case "revision_requested":
+      title = `${str(p.brand_name, "The brand")} asked for changes`;
+      body = str(p.note, campaign);
+      break;
     case "payment_required":
       title = "A deal is waiting for your payment";
       body = campaign;

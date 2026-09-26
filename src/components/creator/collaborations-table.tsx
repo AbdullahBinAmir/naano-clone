@@ -9,7 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsIndicator, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { DataTable, type Column } from "@/components/ui/data-table";
-import { updateCollaborationStatusAction } from "@/lib/actions/collaborations";
+import { submitPostAction, updateCollaborationStatusAction } from "@/lib/actions/collaborations";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { TextField } from "@/components/ui/text-field";
 import { formatCurrency } from "@/lib/utils";
 import type { Collaboration, CollaborationStatus } from "@/types/domain";
 
@@ -18,6 +20,7 @@ const TABS: { key: "all" | CollaborationStatus; label: string }[] = [
   { key: "active", label: "Active" },
   { key: "needs_action", label: "Needs action" },
   { key: "pending_payment", label: "Awaiting payment" },
+  { key: "in_review", label: "In review" },
   { key: "applied", label: "Applications sent" },
   { key: "declined", label: "Declined" },
   { key: "completed", label: "Completed" },
@@ -27,6 +30,7 @@ const STATUS_VARIANT: Record<CollaborationStatus, "neutral" | "accent" | "succes
   applied: "neutral",
   needs_action: "warning",
   pending_payment: "warning",
+  in_review: "warning",
   active: "accent",
   declined: "danger",
   completed: "success",
@@ -36,6 +40,7 @@ const STATUS_LABEL: Record<CollaborationStatus, string> = {
   applied: "Applied",
   needs_action: "Needs action",
   pending_payment: "Awaiting payment",
+  in_review: "In review",
   active: "Active",
   declined: "Declined",
   completed: "Completed",
@@ -64,6 +69,9 @@ export function CollaborationsTable({
   const router = useRouter();
   const [tab, setTab] = React.useState<"all" | CollaborationStatus>("all");
   const [pendingId, setPendingId] = React.useState<string | null>(null);
+  const [submitTarget, setSubmitTarget] = React.useState<CollaborationWithCounterpart | null>(null);
+  const [postUrl, setPostUrl] = React.useState("");
+  const [postUrlError, setPostUrlError] = React.useState<string | undefined>();
 
   async function act(id: string, action: "accept" | "decline" | "complete") {
     setPendingId(id);
@@ -74,6 +82,22 @@ export function CollaborationsTable({
       return;
     }
     toast.success(action === "accept" ? "Accepted" : action === "decline" ? "Declined" : "Marked as posted");
+    router.refresh();
+  }
+
+  async function submitPost() {
+    if (!submitTarget) return;
+    setPendingId(submitTarget.id);
+    setPostUrlError(undefined);
+    const result = await submitPostAction({ collaborationId: submitTarget.id, postUrl });
+    setPendingId(null);
+    if (result.error) {
+      setPostUrlError(result.error);
+      return;
+    }
+    toast.success("Post submitted — the brand will review it");
+    setSubmitTarget(null);
+    setPostUrl("");
     router.refresh();
   }
 
@@ -98,7 +122,17 @@ export function CollaborationsTable({
     },
     { header: "Campaign", cell: (row) => <span className="text-foreground-muted">{row.campaignTitle}</span> },
     { header: "Status", cell: (row) => <Badge variant={STATUS_VARIANT[row.status]}>{STATUS_LABEL[row.status]}</Badge> },
-    { header: "Next action", cell: (row) => <span className="text-foreground-muted">{row.nextActionText}</span> },
+    {
+      header: "Next action",
+      cell: (row) => (
+        <span className="text-foreground-muted">
+          {row.nextActionText}
+          {row.status === "active" && row.revisionNote ? (
+            <span className="mt-1 block text-[13px] text-warning">“{row.revisionNote}”</span>
+          ) : null}
+        </span>
+      ),
+    },
     {
       header: "Due date",
       cell: (row) => (row.dueDate ? new Date(row.dueDate).toLocaleDateString() : <span className="text-foreground-subtle">—</span>),
@@ -112,6 +146,22 @@ export function CollaborationsTable({
       cell: (row) => {
         if (!canAct(row)) return null;
         const busy = pendingId === row.id;
+        if (row.status === "active" && row.fundedAt) {
+          return (
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => {
+                setPostUrl(row.postUrl ?? "");
+                setPostUrlError(undefined);
+                setSubmitTarget(row);
+              }}
+              disabled={busy}
+            >
+              {row.revisionNote ? "Resubmit post" : "Submit post"}
+            </Button>
+          );
+        }
         if (row.status === "active") {
           return (
             <Button size="sm" variant="glass" onClick={() => act(row.id, "complete")} disabled={busy}>
@@ -166,6 +216,32 @@ export function CollaborationsTable({
           </TabsPanel>
         );
       })}
+
+      <Dialog open={submitTarget !== null} onOpenChange={(open) => !open && setSubmitTarget(null)}>
+        <DialogContent>
+          <DialogTitle>Submit your post</DialogTitle>
+          <DialogDescription className="mt-2">
+            Paste the link to your published LinkedIn post. {submitTarget?.counterpartName} reviews it, and your{" "}
+            {submitTarget ? formatCurrency(submitTarget.netPayoutToCreator) : ""} payout is released on approval.
+          </DialogDescription>
+          <div className="mt-4">
+            <TextField
+              label="LinkedIn post URL"
+              type="url"
+              placeholder="https://www.linkedin.com/posts/…"
+              value={postUrl}
+              onChange={(e) => setPostUrl(e.target.value)}
+              error={postUrlError}
+            />
+          </div>
+          <div className="mt-5 flex justify-end gap-3">
+            <DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>
+            <Button variant="primary" onClick={submitPost} disabled={pendingId !== null || !postUrl.trim()}>
+              {pendingId !== null ? "Submitting…" : "Submit for review"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Tabs>
   );
 }

@@ -4,7 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import {
   applyToCampaignSchema,
   collaborationActionSchema,
+  collaborationIdSchema,
   inviteCreatorSchema,
+  requestRevisionSchema,
+  submitPostSchema,
 } from "@/lib/validations/collaborations";
 import { seedCollaborationConversation } from "@/lib/actions/conversation-helpers";
 import { recordCollaborationPayout } from "@/lib/actions/earnings-helpers";
@@ -183,5 +186,59 @@ export async function updateCollaborationStatusAction(input: unknown): Promise<C
     await activateReferralsForCompletedCollaboration(supabase, parsed.data.collaborationId);
   }
 
+  return {};
+}
+
+export async function submitPostAction(input: unknown): Promise<CollaborationActionResult> {
+  const parsed = submitPostSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You need to sign in first." };
+
+  const { error } = await supabase.rpc("submit_collaboration_post", {
+    p_collaboration_id: parsed.data.collaborationId,
+    p_post_url: parsed.data.postUrl,
+  });
+  if (error) return { error: error.message };
+  return {};
+}
+
+/** Brand approves the submitted post: the deal completes and the creator's payout is released. */
+export async function approvePostAction(input: unknown): Promise<CollaborationActionResult> {
+  const parsed = collaborationIdSchema.safeParse(input);
+  if (!parsed.success) return { error: "Invalid deal." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You need to sign in first." };
+
+  const { error } = await supabase.rpc("approve_collaboration", { p_collaboration_id: parsed.data.collaborationId });
+  if (error) return { error: error.message };
+
+  await activateReferralsForCompletedCollaboration(supabase, parsed.data.collaborationId);
+  return {};
+}
+
+export async function requestRevisionAction(input: unknown): Promise<CollaborationActionResult> {
+  const parsed = requestRevisionSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You need to sign in first." };
+
+  const { error } = await supabase.rpc("request_collaboration_revision", {
+    p_collaboration_id: parsed.data.collaborationId,
+    p_note: parsed.data.note,
+  });
+  if (error) return { error: error.message };
   return {};
 }

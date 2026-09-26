@@ -29,6 +29,9 @@ export function rowToCollaboration(row: CollaborationRow): Collaboration {
     netPayoutToCreator: row.net_payout_to_creator,
     nextActionText: row.next_action_text,
     dueDate: row.due_date,
+    fundedAt: row.funded_at ?? null,
+    postUrl: row.post_url ?? null,
+    revisionNote: row.revision_note ?? null,
     // No real performance-tracking source yet — the sparkline stays empty
     // (DataTable already renders "—" for that case) rather than faked.
     performanceReach: [],

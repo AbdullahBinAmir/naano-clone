@@ -54,7 +54,7 @@ export async function getBrandOverview(supabase: SupabaseClient<Database>, brand
 
   const creatorIds = [...new Set(collabs.map((c) => c.creator_profile_id))];
   const bookedIds = [
-    ...new Set(collabs.filter((c) => c.status === "active" || c.status === "completed").map((c) => c.creator_profile_id)),
+    ...new Set(collabs.filter((c) => c.status === "active" || c.status === "in_review" || c.status === "completed").map((c) => c.creator_profile_id)),
   ];
   const since = new Date(now.getTime() - HISTORY_DAYS * 86_400_000).toISOString();
 
@@ -96,7 +96,7 @@ export async function getBrandOverview(supabase: SupabaseClient<Database>, brand
       : null,
   });
 
-  const spending = collabs.filter((c) => c.status === "active" || c.status === "completed");
+  const spending = collabs.filter((c) => c.status === "active" || c.status === "in_review" || c.status === "completed");
 
   return {
     today,

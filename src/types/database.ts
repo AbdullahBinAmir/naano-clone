@@ -5,7 +5,7 @@
 export type AppRole = "creator" | "brand" | "admin";
 export type PlanTier = "self_serve" | "managed";
 export type CampaignStatus = "draft" | "published" | "closed";
-export type CollaborationStatus = "applied" | "needs_action" | "pending_payment" | "active" | "declined" | "completed";
+export type CollaborationStatus = "applied" | "needs_action" | "pending_payment" | "active" | "in_review" | "declined" | "completed";
 export type EarningsType = "collaboration_payout" | "affiliate_reward" | "referral_bonus";
 export type EarningsStatus = "pending" | "in_transit" | "available" | "withdrawn";
 export type PayoutMethodType = "bank_transfer" | "stripe_connect";
@@ -97,6 +97,12 @@ export type CollaborationRow = {
   due_date: string | null;
   /** Set when the brand's Safepay payment for this deal was verified. */
   funded_at: string | null;
+  /** LinkedIn post URL the creator submitted for review. */
+  post_url: string | null;
+  submitted_at: string | null;
+  approved_at: string | null;
+  /** The brand's note when it asked for changes; cleared on resubmission. */
+  revision_note: string | null;
   performance_snapshot: Record<string, unknown>;
   created_at: string;
 }
@@ -246,8 +252,8 @@ export interface Database {
       >;
       collaborations: Table<
         CollaborationRow,
-        Omit<CollaborationRow, "id" | "created_at" | "due_date" | "funded_at" | "performance_snapshot"> &
-          Partial<Pick<CollaborationRow, "due_date" | "funded_at" | "performance_snapshot">>
+        Omit<CollaborationRow, "id" | "created_at" | "due_date" | "funded_at" | "post_url" | "submitted_at" | "approved_at" | "revision_note" | "performance_snapshot"> &
+          Partial<Pick<CollaborationRow, "due_date" | "funded_at" | "post_url" | "submitted_at" | "approved_at" | "revision_note" | "performance_snapshot">>
       >;
       payments: Table<PaymentRow, Omit<PaymentRow, "id" | "created_at" | "paid_at" | "raw" | "status" | "tracker"> & Partial<Pick<PaymentRow, "tracker" | "status" | "raw" | "paid_at">>>;
       payment_events: Table<PaymentEventRow, Omit<PaymentEventRow, "id" | "created_at">>;
@@ -300,6 +306,18 @@ export interface Database {
       };
       activate_referrals_for_completed_collaboration: {
         Args: { p_collaboration_id: string };
+        Returns: void;
+      };
+      submit_collaboration_post: {
+        Args: { p_collaboration_id: string; p_post_url: string };
+        Returns: void;
+      };
+      approve_collaboration: {
+        Args: { p_collaboration_id: string };
+        Returns: void;
+      };
+      request_collaboration_revision: {
+        Args: { p_collaboration_id: string; p_note: string };
         Returns: void;
       };
       apply_payment_success: {

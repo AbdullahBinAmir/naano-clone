@@ -7,7 +7,7 @@ show money carry a "Test mode" notice.
 ## Before you start
 
 The database must have every migration in `supabase/migrations/` applied,
-in order (`0015_notifications.sql` powers the notification bell; `0016_security_hardening.sql` closes the audit findings; `0017_profile_images_storage.sql` creates the image bucket for avatar, banner and logo uploads; `0018_campaign_delete.sql` lets brands delete unused briefs; `0019` then `0020` — run them one at a time, in that order — add the Safepay payment flow).
+in order (`0015_notifications.sql` powers the notification bell; `0016_security_hardening.sql` closes the audit findings; `0017_profile_images_storage.sql` creates the image bucket for avatar, banner and logo uploads; `0018_campaign_delete.sql` lets brands delete unused briefs; `0019` then `0020` — run them one at a time, in that order — add the Safepay payment flow; `0021` then `0022` — again one at a time — add post review and payout release).
 Supabase auth redirect URLs must include `<site>/auth/callback`.
 
 ## Test accounts
@@ -30,14 +30,14 @@ Sign up with a new email to test onboarding — choose creator or brand.
 **Brand**
 1. *Briefs* — write a brief, watch the live preview, save as draft, publish, edit, close, reopen or delete it.
 2. *Match* — browse creators, message one, or open the *Pitches* tab to review applicants side by side.
-3. *Collaborations* — drag deals on the board (or use the buttons) to accept or decline.
+3. *Collaborations* — drag deals on the board (or use the buttons) to accept or decline. Pay accepted deals with **Pay now** (Safepay sandbox test card), then review the creator's submitted post: **Approve** releases the payout, **Changes** sends it back with a note.
 4. Public creator card → **Book a post** sends a direct offer at the creator's price.
 5. *Billing*, *Messages*, *Settings* (company logo, name, industry, password).
 
 **Creator**
 1. *My card* — upload a banner and profile photo, edit and publish your card; *Copy my card link* from the assistant (⌘K).
 2. *Opportunities* — filter/sort open briefs, **Apply** with an optional pitch note.
-3. *Collaborations* — accept or decline offers; mark an active deal as posted.
+3. *Collaborations* — accept or decline offers; once the brand has paid, publish on LinkedIn and **Submit post** with the post link. The brand reviews it; on approval your payout is added to your balance (if they ask for changes, edit and resubmit).
 4. *Earnings* — payout appears "in transit", then "available"; save bank details and withdraw (simulated).
 5. *Affiliate* — copy your invite links; open one in a private window to test the referral flow.
 6. *Analytics*, *Community*, *Messages*, *Settings*.
@@ -47,7 +47,7 @@ mobile layout (sidebar becomes a drawer).
 
 ## Known limitations
 
-- Brand payments use Safepay sandbox. Creator earnings, withdrawals and payout are simulated ledger entries; there is no post-approval or refund step yet.
+- Brand payments use Safepay sandbox. Creator earnings, withdrawals and payout are simulated ledger entries; the payout is released to the creator's simulated balance when the brand approves the post; there is no refund, dispute or auto-approval step yet.
 - Accepting a deal now moves it to "Awaiting payment"; the brand pays from the Deal board. The seed script funds seeded deals directly only if `SUPABASE_SECRET_KEY` is set.
 - Briefs can be deleted only while nobody has applied; after that they can only be closed.
 - Creators can't change their public handle.

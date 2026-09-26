@@ -66,6 +66,7 @@ export type CollaborationStatus =
   | "needs_action"
   | "pending_payment"
   | "active"
+  | "in_review"
   | "declined"
   | "completed";
 
@@ -82,6 +83,10 @@ export interface Collaboration {
   netPayoutToCreator: number;
   nextActionText: string;
   dueDate: string | null;
+  /** Set once the brand's payment was verified (deals from before payments are null). */
+  fundedAt: string | null;
+  postUrl: string | null;
+  revisionNote: string | null;
   performanceReach: number[];
 }
 

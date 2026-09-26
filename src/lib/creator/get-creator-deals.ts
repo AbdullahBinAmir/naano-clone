@@ -17,7 +17,7 @@ export async function getCreatorDeals(supabase: SupabaseClient<Database>, creato
     .from("collaborations")
     .select("id, status, brand_name, campaign_title, net_payout_to_creator, created_at, due_date")
     .eq("creator_profile_id", creatorId)
-    .in("status", ["active", "needs_action"])
+    .in("status", ["active", "in_review", "needs_action"])
     .order("created_at", { ascending: false });
 
   const toDeal = (r: NonNullable<typeof data>[number]): CreatorDeal => ({
@@ -30,7 +30,7 @@ export async function getCreatorDeals(supabase: SupabaseClient<Database>, creato
   });
   const rows = data ?? [];
   return {
-    active: rows.filter((r) => r.status === "active").map(toDeal),
+    active: rows.filter((r) => r.status === "active" || r.status === "in_review").map(toDeal),
     offers: rows.filter((r) => r.status === "needs_action").map(toDeal),
   };
 }

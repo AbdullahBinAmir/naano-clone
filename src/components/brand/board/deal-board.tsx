@@ -7,7 +7,8 @@ import { GripVertical } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { updateCollaborationStatusAction } from "@/lib/actions/collaborations";
+import { approvePostAction, requestRevisionAction, updateCollaborationStatusAction } from "@/lib/actions/collaborations";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { startCheckoutAction } from "@/lib/actions/payments";
 import type { BoardDeal } from "@/lib/brand/get-brand-deals";
 import type { CollaborationStatus } from "@/types/database";
@@ -24,6 +25,7 @@ const COLUMNS: Column[] = [
   { status: "needs_action", title: "Awaiting creator", hint: "Offers you sent — the creator responds" },
   { status: "pending_payment", title: "Awaiting payment", hint: "Accepted — pay to start the work" },
   { status: "active", title: "Active", hint: "Paid — creators publish their posts" },
+  { status: "in_review", title: "In review", hint: "Approve the post to release the payout" },
   { status: "completed", title: "Completed", hint: "Marked as posted by the creator" },
   { status: "declined", title: "Declined", hint: "Closed without a booking" },
 ];
@@ -47,6 +49,8 @@ export function DealBoard({ deals: initialDeals }: { deals: BoardDeal[] }) {
   const [dragging, setDragging] = React.useState<BoardDeal | null>(null);
   const [overColumn, setOverColumn] = React.useState<CollaborationStatus | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
+  const [reviseTarget, setReviseTarget] = React.useState<BoardDeal | null>(null);
+  const [note, setNote] = React.useState("");
 
   // Fresh server data (after router.refresh) replaces the optimistic copy.
   if (initialDeals !== seen) {
@@ -91,6 +95,33 @@ export function DealBoard({ deals: initialDeals }: { deals: BoardDeal[] }) {
       return;
     }
     window.location.assign(result.url); // hosted Safepay checkout
+  }
+
+  async function approve(deal: BoardDeal) {
+    setBusyId(deal.id);
+    const result = await approvePostAction({ collaborationId: deal.id });
+    setBusyId(null);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Post approved — the creator's payout is released");
+    router.refresh();
+  }
+
+  async function requestChanges() {
+    if (!reviseTarget) return;
+    setBusyId(reviseTarget.id);
+    const result = await requestRevisionAction({ collaborationId: reviseTarget.id, note });
+    setBusyId(null);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Changes requested");
+    setReviseTarget(null);
+    setNote("");
+    router.refresh();
   }
 
   async function cancelDeal(deal: BoardDeal) {
@@ -191,6 +222,37 @@ export function DealBoard({ deals: initialDeals }: { deals: BoardDeal[] }) {
                           : "No due date"}
                       </span>
                     </div>
+                    {d.status === "in_review" && (
+                      <div className="flex flex-col gap-2">
+                        {d.postUrl && (
+                          <a
+                            href={d.postUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="truncate text-[13px] text-accent underline-offset-2 hover:underline"
+                          >
+                            View LinkedIn post ↗
+                          </a>
+                        )}
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="primary" className="flex-1" disabled={busy} onClick={() => approve(d)}>
+                            {busy ? "…" : "Approve"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                            disabled={busy}
+                            onClick={() => {
+                              setNote("");
+                              setReviseTarget(d);
+                            }}
+                          >
+                            Changes
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                     {d.status === "pending_payment" && (
                       <div className="flex gap-2">
                         <Button size="sm" variant="primary" className="flex-1" disabled={busy} onClick={() => pay(d)}>
@@ -219,6 +281,30 @@ export function DealBoard({ deals: initialDeals }: { deals: BoardDeal[] }) {
           </section>
         );
       })}
+      <Dialog open={reviseTarget !== null} onOpenChange={(open) => !open && setReviseTarget(null)}>
+        <DialogContent>
+          <DialogTitle>Ask {reviseTarget?.creator.name} for changes</DialogTitle>
+          <DialogDescription className="mt-2">
+            They&apos;ll see your note, update the post and resubmit it. Nothing is paid out until you approve.
+          </DialogDescription>
+          <label className="mt-4 flex flex-col gap-1.5 text-sm">
+            <span className="font-medium text-foreground-muted">What should change?</span>
+            <textarea
+              className="input min-h-24"
+              maxLength={500}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Please mention the launch date and tag our company page."
+            />
+          </label>
+          <div className="mt-5 flex justify-end gap-3">
+            <DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>
+            <Button variant="primary" onClick={requestChanges} disabled={busyId !== null || !note.trim()}>
+              {busyId !== null ? "Sending…" : "Send request"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

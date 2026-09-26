@@ -47,10 +47,15 @@ export function buildCheckoutUrl(input: { tracker: string; orderId: string; redi
   return `${cfg.checkoutBase}?${params.toString()}`;
 }
 
-/** Server-to-server read of a payment's state. This — not the browser redirect — is what we trust. */
+/**
+ * Server-to-server read of a payment's state (GET /order/v1/{tracker}, which
+ * returns `data.state`, `data.amount` and `data.currency`). This — not the
+ * browser redirect — is what we trust. The reporter API only knows a tracker
+ * once a payment attempt exists, so it isn't used for this check.
+ */
 export async function fetchPayment(tracker: string): Promise<unknown> {
   const cfg = getSafepayConfig();
-  const res = await fetch(`${cfg.apiBase}/reporter/api/v1/payments/${encodeURIComponent(tracker)}`, {
+  const res = await fetch(`${cfg.apiBase}/order/v1/${encodeURIComponent(tracker)}`, {
     headers: { "x-sfpy-merchant-secret": cfg.secretKey },
     cache: "no-store",
   });
