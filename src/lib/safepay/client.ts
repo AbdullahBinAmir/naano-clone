@@ -76,28 +76,12 @@ export function verifyRedirectSignature(tracker: string, sig: string): boolean {
 }
 
 /**
- * Webhook signature check. Safepay signs deliveries with the shared webhook
- * secret in the `x-sfpy-signature` header. Their SDK signs the JSON `data`
- * object with HMAC-SHA512; other integrations sign the raw request body, so we
- * accept a match on any of those forms (still requires knowing the secret) and
- * report which one matched, so the accepted set can be narrowed later.
+ * Webhook signature: HMAC-SHA512 of the JSON `data` object with the webhook
+ * secret, hex, in the `x-sfpy-signature` header. Confirmed against real
+ * deliveries from Safepay's sandbox.
  */
-export function verifyWebhookSignature(
-  input: { data: unknown; body: unknown; rawText: string },
-  signature: string | null,
-): string | null {
-  if (!signature) return null;
-  const secret = getSafepayConfig().webhookSecret;
-  const candidates = [
-    ["data", JSON.stringify(input.data)],
-    ["raw", input.rawText],
-    ["body", JSON.stringify(input.body)],
-  ] as const;
-  const sig = signature.trim().replace(/^sha(?:256|512)=/i, "").toLowerCase();
-  for (const [what, payload] of candidates) {
-    for (const alg of ["sha512", "sha256"] as const) {
-      if (safeEqual(sig, crypto.createHmac(alg, secret).update(payload).digest("hex"))) return `${alg}(${what})`;
-    }
-  }
-  return null;
+export function verifyWebhookSignature(data: unknown, signature: string | null): boolean {
+  if (!signature) return false;
+  const expected = crypto.createHmac("sha512", getSafepayConfig().webhookSecret).update(JSON.stringify(data)).digest("hex");
+  return safeEqual(signature.trim().toLowerCase(), expected);
 }

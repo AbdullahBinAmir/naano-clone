@@ -11,39 +11,8 @@ import { settlePayment } from "@/lib/safepay/settle";
 export async function POST(request: Request) {
   if (missingSafepayEnv().length > 0) return NextResponse.json({ error: "Not configured" }, { status: 503 });
 
-  const rawText = await request.text();
-  let body: { data?: Record<string, unknown> } | null = null;
-  try {
-    body = JSON.parse(rawText);
-  } catch {
-    body = null;
-  }
-  const verifiedWith = body?.data
-    ? verifyWebhookSignature({ data: body.data, body, rawText }, request.headers.get("x-sfpy-signature"))
-    : null;
-  if (!body?.data || !verifiedWith) {
-    // Diagnostic switch for first-time setup: with SAFEPAY_WEBHOOK_DEBUG=1 a rejected
-    // delivery is kept (headers minus secrets, plus body) so a wrong secret or an
-    // unexpected format can be diagnosed. Off by default — otherwise anyone could
-    // write rows here.
-    if (process.env.SAFEPAY_WEBHOOK_DEBUG === "1") {
-      await createAdminClient()
-        .from("payment_events")
-        .upsert(
-          {
-            dedupe_key: `webhook_rejected:${crypto.createHash("sha256").update(rawText).digest("hex")}`,
-            tracker: null,
-            source: "webhook_rejected",
-            payload: {
-              signaturePresent: !!request.headers.get("x-sfpy-signature"),
-              headerNames: [...request.headers.keys()].filter((h) => !["authorization", "cookie"].includes(h)),
-              userAgent: request.headers.get("user-agent"),
-              body: rawText.slice(0, 4000),
-            },
-          },
-          { onConflict: "dedupe_key", ignoreDuplicates: true },
-        );
-    }
+  const body = (await request.json().catch(() => null)) as { data?: Record<string, unknown> } | null;
+  if (!body?.data || !verifyWebhookSignature(body.data, request.headers.get("x-sfpy-signature"))) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
@@ -65,7 +34,7 @@ export async function POST(request: Request) {
         dedupe_key: `webhook:${crypto.createHash("sha256").update(JSON.stringify(body)).digest("hex")}`,
         tracker: tracker ?? null,
         source: "webhook",
-        payload: { ...body, _verifiedWith: verifiedWith } as Record<string, unknown>,
+        payload: body as Record<string, unknown>,
       },
       { onConflict: "dedupe_key", ignoreDuplicates: true },
     );
