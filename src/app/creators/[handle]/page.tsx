@@ -1,3 +1,5 @@
+import { cache } from "react";
+import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -22,7 +24,7 @@ interface ViewModel {
   posts: { id: string; originalPostUrl: string; postedAt: string }[];
 }
 
-async function loadRealCreator(handle: string): Promise<ViewModel | null> {
+const loadRealCreator = cache(async function loadRealCreator(handle: string): Promise<ViewModel | null> {
   const supabase = await createClient();
 
   const { data: profileRow } = await supabase.from("creator_profiles").select("*").eq("handle", handle).maybeSingle();
@@ -63,7 +65,7 @@ async function loadRealCreator(handle: string): Promise<ViewModel | null> {
       postedAt: p.posted_at,
     })),
   };
-}
+});
 
 async function resolveBookingMode(handle: string, vm: ViewModel): Promise<BookingMode> {
   const supabase = await createClient();
@@ -84,6 +86,22 @@ async function resolveBookingMode(handle: string, vm: ViewModel): Promise<Bookin
     .eq("brand_profile_id", user.id)
     .maybeSingle();
   return { kind: "brand", creatorProfileId: vm.profile.profileId, alreadyOffered: !!existing };
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ handle: string }> }): Promise<Metadata> {
+  const { handle } = await params;
+  const vm = await loadRealCreator(handle);
+  if (!vm) return { title: "Creator not found" };
+  const { profile, card } = vm;
+  const description =
+    profile.headline || profile.bio.slice(0, 160) || `${profile.displayName} on Naano — book a sponsored LinkedIn post.`;
+  const image = card.bannerUrl || profile.avatarUrl;
+  return {
+    title: `${profile.displayName} — LinkedIn creator`,
+    description,
+    openGraph: { title: `${profile.displayName} on Naano`, description, ...(image ? { images: [image] } : {}) },
+    twitter: { card: "summary_large_image" },
+  };
 }
 
 export default async function PublicCreatorCardPage({ params }: { params: Promise<{ handle: string }> }) {

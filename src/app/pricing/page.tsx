@@ -1,9 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { MarketingHeader } from "@/components/marketing/marketing-header";
 import { MarketingFooter } from "@/components/marketing/marketing-footer";
 import { Card } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
+
+export const metadata: Metadata = { title: "Pricing", description: "Simple pricing for brands: pay per post, no retainers." };
 
 const PLANS = [
   {

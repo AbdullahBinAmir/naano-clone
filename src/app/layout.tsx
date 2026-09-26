@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Outfit } from "next/font/google";
 import { Toaster } from "sonner";
+import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -14,12 +15,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: {
     default: "Naano — Find LinkedIn creators your buyers already trust",
     template: "%s · Naano",
   },
   description:
     "A B2B LinkedIn creator marketplace: match with vetted creators, brief in days, track pipeline.",
+  openGraph: { siteName: "Naano", type: "website" },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
