@@ -7,7 +7,8 @@ export interface EarningsActionResult {
   error?: string;
 }
 
-export async function withdrawEarningsAction(input: unknown): Promise<EarningsActionResult> {
+/** Asks Naano to send `amount` from the creator's available balance to their bank account. */
+export async function requestPayoutAction(input: unknown): Promise<EarningsActionResult> {
   const parsed = withdrawalSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
 
@@ -17,7 +18,7 @@ export async function withdrawEarningsAction(input: unknown): Promise<EarningsAc
   } = await supabase.auth.getUser();
   if (!user) return { error: "You need to sign in first." };
 
-  const { error } = await supabase.rpc("request_withdrawal", { p_amount: parsed.data.amount });
+  const { error } = await supabase.rpc("request_payout", { p_amount: parsed.data.amount });
   if (error) return { error: error.message };
 
   return {};
@@ -45,7 +46,9 @@ export async function savePayoutMethodAction(input: unknown): Promise<EarningsAc
         .from("payout_methods")
         .update({
           bank_account_holder: parsed.data.bankAccountHolder,
-          bank_last_four: parsed.data.bankLastFour,
+          bank_name: parsed.data.bankName,
+          account_number: parsed.data.accountNumber,
+          bank_last_four: parsed.data.accountNumber.slice(-4),
           is_active: true,
         })
         .eq("id", existing.id)
@@ -53,7 +56,9 @@ export async function savePayoutMethodAction(input: unknown): Promise<EarningsAc
         creator_profile_id: user.id,
         method_type: "bank_transfer",
         bank_account_holder: parsed.data.bankAccountHolder,
-        bank_last_four: parsed.data.bankLastFour,
+        bank_name: parsed.data.bankName,
+        account_number: parsed.data.accountNumber,
+        bank_last_four: parsed.data.accountNumber.slice(-4),
         is_active: true,
       });
   if (error) return { error: error.message };

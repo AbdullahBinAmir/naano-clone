@@ -34,6 +34,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Webhooks are server-to-server: no session to refresh.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|images/|api/webhooks).*)"],
+  // Webhooks and cron are server-to-server: no session to refresh.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|images/|api/webhooks|api/cron).*)"],
 };

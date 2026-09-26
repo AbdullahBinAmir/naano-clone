@@ -12,6 +12,7 @@ import { DataTable, type Column } from "@/components/ui/data-table";
 import { submitPostAction, updateCollaborationStatusAction } from "@/lib/actions/collaborations";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { TextField } from "@/components/ui/text-field";
+import { DisputeDialog } from "@/components/collaborations/dispute-dialog";
 import { formatCurrency } from "@/lib/utils";
 import type { Collaboration, CollaborationStatus } from "@/types/domain";
 
@@ -21,6 +22,7 @@ const TABS: { key: "all" | CollaborationStatus; label: string }[] = [
   { key: "needs_action", label: "Needs action" },
   { key: "pending_payment", label: "Awaiting payment" },
   { key: "in_review", label: "In review" },
+  { key: "disputed", label: "Disputed" },
   { key: "applied", label: "Applications sent" },
   { key: "declined", label: "Declined" },
   { key: "completed", label: "Completed" },
@@ -31,8 +33,10 @@ const STATUS_VARIANT: Record<CollaborationStatus, "neutral" | "accent" | "succes
   needs_action: "warning",
   pending_payment: "warning",
   in_review: "warning",
+  disputed: "danger",
   active: "accent",
   declined: "danger",
+  refunded: "neutral",
   completed: "success",
 };
 
@@ -41,8 +45,10 @@ const STATUS_LABEL: Record<CollaborationStatus, string> = {
   needs_action: "Needs action",
   pending_payment: "Awaiting payment",
   in_review: "In review",
+  disputed: "Disputed",
   active: "Active",
   declined: "Declined",
+  refunded: "Refunded",
   completed: "Completed",
 };
 
@@ -70,6 +76,7 @@ export function CollaborationsTable({
   const [tab, setTab] = React.useState<"all" | CollaborationStatus>("all");
   const [pendingId, setPendingId] = React.useState<string | null>(null);
   const [submitTarget, setSubmitTarget] = React.useState<CollaborationWithCounterpart | null>(null);
+  const [disputeId, setDisputeId] = React.useState<string | null>(null);
   const [postUrl, setPostUrl] = React.useState("");
   const [postUrlError, setPostUrlError] = React.useState<string | undefined>();
 
@@ -104,7 +111,9 @@ export function CollaborationsTable({
   const canAct = (row: CollaborationWithCounterpart) =>
     (viewer === "brand" && row.status === "applied") ||
     (viewer === "creator" && row.status === "needs_action") ||
-    (viewer === "creator" && row.status === "active");
+    (viewer === "creator" && row.status === "active") ||
+    // Either side can dispute a paid deal that is in progress.
+    (!!row.fundedAt && (row.status === "active" || row.status === "in_review"));
 
   const columns: Column<CollaborationWithCounterpart>[] = [
     {
@@ -146,8 +155,16 @@ export function CollaborationsTable({
       cell: (row) => {
         if (!canAct(row)) return null;
         const busy = pendingId === row.id;
+        const canDispute = !!row.fundedAt && (row.status === "active" || row.status === "in_review");
+        const disputeButton = canDispute ? (
+          <Button size="sm" variant="ghost" onClick={() => setDisputeId(row.id)} disabled={busy}>
+            Dispute
+          </Button>
+        ) : null;
+        if (row.status === "in_review") return <div className="flex gap-1.5">{disputeButton}</div>;
         if (row.status === "active" && row.fundedAt) {
           return (
+            <div className="flex gap-1.5">
             <Button
               size="sm"
               variant="primary"
@@ -160,6 +177,8 @@ export function CollaborationsTable({
             >
               {row.revisionNote ? "Resubmit post" : "Submit post"}
             </Button>
+            {disputeButton}
+            </div>
           );
         }
         if (row.status === "active") {
@@ -242,6 +261,12 @@ export function CollaborationsTable({
           </div>
         </DialogContent>
       </Dialog>
+      <DisputeDialog
+        collaborationId={disputeId}
+        open={disputeId !== null}
+        onOpenChange={(o) => !o && setDisputeId(null)}
+        onOpened={() => router.refresh()}
+      />
     </Tabs>
   );
 }

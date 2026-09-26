@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { homePathFor } from "@/lib/auth/home-path";
 
 export default async function DashboardIndex() {
   const supabase = await createClient();
@@ -10,5 +11,5 @@ export default async function DashboardIndex() {
 
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
   if (!profile) redirect("/onboarding");
-  redirect(profile.role === "brand" ? "/dashboard/brand/overview" : "/dashboard/creator/overview");
+  redirect(homePathFor(profile.role));
 }

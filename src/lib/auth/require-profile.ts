@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { homePathFor } from "@/lib/auth/home-path";
 import type { AppRole } from "@/types/database";
 
 /**
@@ -18,7 +19,7 @@ export async function requireProfile(expectedRole: AppRole) {
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
   if (!profile) redirect("/onboarding");
   if (profile.role !== expectedRole) {
-    redirect(profile.role === "creator" ? "/dashboard/creator/overview" : "/dashboard/brand/overview");
+    redirect(homePathFor(profile.role));
   }
 
   return { user, profile };

@@ -67,7 +67,9 @@ export type CollaborationStatus =
   | "pending_payment"
   | "active"
   | "in_review"
+  | "disputed"
   | "declined"
+  | "refunded"
   | "completed";
 
 export interface Collaboration {

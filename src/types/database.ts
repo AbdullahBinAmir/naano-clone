@@ -5,8 +5,8 @@
 export type AppRole = "creator" | "brand" | "admin";
 export type PlanTier = "self_serve" | "managed";
 export type CampaignStatus = "draft" | "published" | "closed";
-export type CollaborationStatus = "applied" | "needs_action" | "pending_payment" | "active" | "in_review" | "declined" | "completed";
-export type EarningsType = "collaboration_payout" | "affiliate_reward" | "referral_bonus";
+export type CollaborationStatus = "applied" | "needs_action" | "pending_payment" | "active" | "in_review" | "disputed" | "declined" | "refunded" | "completed";
+export type EarningsType = "collaboration_payout" | "affiliate_reward" | "referral_bonus" | "payout_reversal";
 export type EarningsStatus = "pending" | "in_transit" | "available" | "withdrawn";
 export type PayoutMethodType = "bank_transfer" | "stripe_connect";
 export type ReferralType = "invite_brand" | "invite_creator";
@@ -107,7 +107,7 @@ export type CollaborationRow = {
   created_at: string;
 }
 
-export type PaymentStatus = "pending" | "paid" | "failed" | "cancelled";
+export type PaymentStatus = "pending" | "paid" | "failed" | "cancelled" | "refunded";
 
 export type PaymentRow = {
   id: string;
@@ -121,6 +121,8 @@ export type PaymentRow = {
   currency: "USD" | "PKR";
   status: PaymentStatus;
   paid_at: string | null;
+  refunded_at: string | null;
+  refund_reference: string | null;
   raw: Record<string, unknown>;
   created_at: string;
 }
@@ -134,7 +136,44 @@ export type PaymentEventRow = {
   created_at: string;
 }
 
-export type PlatformSettingsRow = { id: true; fee_percent: number }
+export type PlatformSettingsRow = {
+  id: true;
+  fee_percent: number;
+  auto_approve_days: number;
+  unpaid_expiry_days: number;
+  min_payout: number;
+}
+
+export type DisputeRow = {
+  id: string;
+  collaboration_id: string;
+  opened_by: string;
+  reason: string;
+  status: "open" | "resolved";
+  resolution: "release" | "refund" | null;
+  resolution_note: string | null;
+  resolved_by: string | null;
+  resolved_at: string | null;
+  created_at: string;
+}
+
+export type PayoutRequestStatus = "requested" | "processing" | "paid" | "failed";
+
+export type PayoutRequestRow = {
+  id: string;
+  creator_profile_id: string;
+  amount: number;
+  currency: string;
+  status: PayoutRequestStatus;
+  account_holder: string;
+  bank_name: string;
+  account_number: string;
+  admin_id: string | null;
+  reference: string | null;
+  admin_note: string | null;
+  requested_at: string;
+  processed_at: string | null;
+}
 
 export type ConversationRow = {
   id: string;
@@ -173,6 +212,9 @@ export type PayoutMethodRow = {
   method_type: PayoutMethodType;
   bank_account_holder: string | null;
   bank_last_four: string | null;
+  bank_name: string | null;
+  /** IBAN / account number. Only the owner can read it (and the server, for the admin payout queue). */
+  account_number: string | null;
   is_active: boolean;
   created_at: string;
 }
@@ -255,8 +297,10 @@ export interface Database {
         Omit<CollaborationRow, "id" | "created_at" | "due_date" | "funded_at" | "post_url" | "submitted_at" | "approved_at" | "revision_note" | "performance_snapshot"> &
           Partial<Pick<CollaborationRow, "due_date" | "funded_at" | "post_url" | "submitted_at" | "approved_at" | "revision_note" | "performance_snapshot">>
       >;
-      payments: Table<PaymentRow, Omit<PaymentRow, "id" | "created_at" | "paid_at" | "raw" | "status" | "tracker"> & Partial<Pick<PaymentRow, "tracker" | "status" | "raw" | "paid_at">>>;
+      payments: Table<PaymentRow, Omit<PaymentRow, "id" | "created_at" | "paid_at" | "refunded_at" | "refund_reference" | "raw" | "status" | "tracker"> & Partial<Pick<PaymentRow, "tracker" | "status" | "raw" | "paid_at" | "refunded_at" | "refund_reference">>>;
       payment_events: Table<PaymentEventRow, Omit<PaymentEventRow, "id" | "created_at">>;
+      disputes: Table<DisputeRow, Pick<DisputeRow, "collaboration_id" | "opened_by" | "reason">>;
+      payout_requests: Table<PayoutRequestRow, Partial<PayoutRequestRow>>;
       platform_settings: Table<PlatformSettingsRow, PlatformSettingsRow>;
       conversations: Table<ConversationRow, Partial<Omit<ConversationRow, "id" | "created_at">>>;
       conversation_participants: Table<ConversationParticipantRow, ConversationParticipantRow>;
@@ -319,6 +363,34 @@ export interface Database {
       request_collaboration_revision: {
         Args: { p_collaboration_id: string; p_note: string };
         Returns: void;
+      };
+      open_dispute: {
+        Args: { p_collaboration_id: string; p_reason: string };
+        Returns: void;
+      };
+      resolve_dispute: {
+        Args: { p_dispute_id: string; p_resolution: string; p_note: string; p_refund_reference: string };
+        Returns: void;
+      };
+      admin_refund_collaboration: {
+        Args: { p_collaboration_id: string; p_note: string; p_refund_reference: string };
+        Returns: void;
+      };
+      request_payout: {
+        Args: { p_amount: number };
+        Returns: void;
+      };
+      admin_set_payout_status: {
+        Args: { p_request_id: string; p_status: string; p_reference: string; p_note: string };
+        Returns: void;
+      };
+      auto_approve_due_collaborations: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
+      expire_unpaid_collaborations: {
+        Args: Record<string, never>;
+        Returns: number;
       };
       apply_payment_success: {
         Args: { p_tracker: string; p_amount: number; p_currency: string; p_payload: Record<string, unknown> };

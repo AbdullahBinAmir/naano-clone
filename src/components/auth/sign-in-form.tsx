@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
 import { signInAction } from "@/lib/actions/auth";
+import { homePathFor } from "@/lib/auth/home-path";
 
 export function SignInForm({ next, notice }: { next: string | null; notice: string | null }) {
   const router = useRouter();
@@ -33,7 +34,7 @@ export function SignInForm({ next, notice }: { next: string | null; notice: stri
     toast.success("Signed in");
     router.refresh();
     if (!result.role) router.push("/onboarding");
-    else router.push(next ?? (result.role === "creator" ? "/dashboard/creator/overview" : "/dashboard/brand/overview"));
+    else router.push(next ?? homePathFor(result.role));
   }
 
   return (

@@ -21,10 +21,10 @@ import {
 } from "@/components/ui/dialog";
 import { GradientStatCard } from "@/components/ui/gradient-stat-card";
 import { EarningsChart } from "@/components/charts/earnings-chart";
-import { savePayoutMethodAction, withdrawEarningsAction } from "@/lib/actions/earnings";
+import { requestPayoutAction, savePayoutMethodAction } from "@/lib/actions/earnings";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { EarningsSummary, StatementLine } from "@/lib/earnings/get-earnings-summary";
-import type { EarningsStatus } from "@/types/database";
+import type { EarningsStatus, PayoutRequestRow, PayoutRequestStatus } from "@/types/database";
 
 const MONEY = { style: "currency", currency: CURRENCY, maximumFractionDigits: 0 } as const;
 
@@ -152,25 +152,66 @@ function Statement({ lines }: { lines: StatementLine[] }) {
   );
 }
 
-export function EarningsDashboard({ statement, payoutMethods, monthly, totals }: EarningsSummary) {
+const PAYOUT_META: Record<PayoutRequestStatus, { label: string; variant: "neutral" | "warning" | "success" | "danger" }> = {
+  requested: { label: "Requested", variant: "warning" },
+  processing: { label: "Processing", variant: "warning" },
+  paid: { label: "Paid", variant: "success" },
+  failed: { label: "Failed — returned", variant: "danger" },
+};
+
+function PayoutRequests({ requests }: { requests: PayoutRequestRow[] }) {
+  return (
+    <Card padding="lg">
+      <CardHeader className="mb-2">
+        <CardTitle className="text-2xl">Payout requests</CardTitle>
+      </CardHeader>
+      {requests.length === 0 ? (
+        <p className="py-6 text-center text-sm text-foreground-muted">
+          No payouts yet. Request one from your available balance and the Naano team will send it to your bank.
+        </p>
+      ) : (
+        <ul className="flex flex-col divide-y divide-border">
+          {requests.map((r) => (
+            <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 py-3.5">
+              <div>
+                <p className="font-medium">{formatCurrency(Number(r.amount), r.currency)}</p>
+                <p className="text-[13px] text-foreground-muted">
+                  Requested {new Date(r.requested_at).toLocaleDateString()} · {r.bank_name} ····{r.account_number.slice(-4)}
+                </p>
+                {r.status === "paid" && r.reference && (
+                  <p className="text-[13px] text-foreground-muted">Bank reference: {r.reference}</p>
+                )}
+                {r.status === "failed" && r.admin_note && <p className="text-[13px] text-danger">{r.admin_note}</p>}
+              </div>
+              <Badge variant={PAYOUT_META[r.status].variant}>{PAYOUT_META[r.status].label}</Badge>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
+export function EarningsDashboard({ statement, payoutMethods, payoutRequests, minPayout, monthly, totals }: EarningsSummary) {
   const router = useRouter();
   const [amount, setAmount] = React.useState("");
   const [withdrawing, setWithdrawing] = React.useState(false);
   const [editingBank, setEditingBank] = React.useState(false);
   const [savingBank, setSavingBank] = React.useState(false);
   const [bankHolder, setBankHolder] = React.useState("");
-  const [bankLastFour, setBankLastFour] = React.useState("");
+  const [bankName, setBankName] = React.useState("");
+  const [accountNumber, setAccountNumber] = React.useState("");
   const bankMethod = payoutMethods.find((m) => m.method_type === "bank_transfer");
 
   async function handleWithdraw() {
     setWithdrawing(true);
-    const result = await withdrawEarningsAction({ amount: Number(amount) || totals.available });
+    const result = await requestPayoutAction({ amount: Number(amount) || totals.available });
     setWithdrawing(false);
     if (result.error) {
       toast.error(result.error);
       return;
     }
-    toast.success("Withdrawal complete");
+    toast.success("Payout requested — the Naano team will send it to your bank");
     setAmount("");
     router.refresh();
   }
@@ -178,7 +219,7 @@ export function EarningsDashboard({ statement, payoutMethods, monthly, totals }:
   async function handleSaveBank(e: React.FormEvent) {
     e.preventDefault();
     setSavingBank(true);
-    const result = await savePayoutMethodAction({ bankAccountHolder: bankHolder, bankLastFour });
+    const result = await savePayoutMethodAction({ bankAccountHolder: bankHolder, bankName, accountNumber });
     setSavingBank(false);
     if (result.error) {
       toast.error(result.error);
@@ -198,7 +239,8 @@ export function EarningsDashboard({ statement, payoutMethods, monthly, totals }:
       />
 
       <TestModeNotice>
-        Earnings and withdrawals are simulated in this build. Nothing is paid out to a real bank account.
+        Payouts are sent by the Naano team to your bank account, usually within a few business days. Brand payments in this
+        build run in Safepay&apos;s sandbox.
       </TestModeNotice>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
@@ -246,15 +288,15 @@ export function EarningsDashboard({ statement, payoutMethods, monthly, totals }:
           />
 
           <Card padding="lg" className="flex flex-col gap-4">
-            <CardTitle className="text-2xl">Withdraw</CardTitle>
+            <CardTitle className="text-2xl">Request a payout</CardTitle>
 
             <div className="flex items-start gap-3 rounded-md border border-border bg-card-raised p-4">
               <Banknote className="mt-0.5 h-5 w-5 shrink-0 text-foreground-subtle" strokeWidth={1.75} />
               <div className="min-w-0 flex-1">
                 <p className="font-medium">Bank transfer</p>
                 <p className="text-sm text-foreground-muted">
-                  {bankMethod?.bank_last_four
-                    ? `${bankMethod.bank_account_holder} · account ending ${bankMethod.bank_last_four}`
+                  {bankMethod?.account_number
+                    ? `${bankMethod.bank_account_holder} · ${bankMethod.bank_name ?? "Bank"} ····${bankMethod.bank_last_four ?? ""}`
                     : "No bank details on file."}
                 </p>
                 <Dialog
@@ -263,21 +305,22 @@ export function EarningsDashboard({ statement, payoutMethods, monthly, totals }:
                     setEditingBank(open);
                     if (open) {
                       setBankHolder(bankMethod?.bank_account_holder ?? "");
-                      setBankLastFour(bankMethod?.bank_last_four ?? "");
+                      setBankName(bankMethod?.bank_name ?? "");
+                      setAccountNumber(bankMethod?.account_number ?? "");
                     }
                   }}
                 >
                   <DialogTrigger
                     render={
                       <Button variant="outline" size="sm" className="mt-3">
-                        {bankMethod?.bank_last_four ? "Edit" : "Add details"}
+                        {bankMethod?.account_number ? "Edit" : "Add details"}
                       </Button>
                     }
                   />
                   <DialogContent>
                     <DialogTitle>Bank transfer details</DialogTitle>
                     <DialogDescription>
-                      Only the account holder name and last 4 digits are stored — never a full account number.
+                      Where we send your payouts. Only you and the Naano payments team can see these details.
                     </DialogDescription>
                     <form onSubmit={handleSaveBank} className="mt-4 flex flex-col gap-3">
                       <input
@@ -290,12 +333,19 @@ export function EarningsDashboard({ statement, payoutMethods, monthly, totals }:
                       />
                       <input
                         className="input"
-                        aria-label="Last 4 digits"
-                        placeholder="Last 4 digits"
-                        value={bankLastFour}
-                        onChange={(e) => setBankLastFour(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                        inputMode="numeric"
-                        maxLength={4}
+                        aria-label="Bank name"
+                        placeholder="Bank name"
+                        value={bankName}
+                        onChange={(e) => setBankName(e.target.value)}
+                        required
+                      />
+                      <input
+                        className="input"
+                        aria-label="IBAN or account number"
+                        placeholder="IBAN or account number"
+                        value={accountNumber}
+                        onChange={(e) => setAccountNumber(e.target.value)}
+                        autoComplete="off"
                         required
                       />
                       <div className="mt-2 flex justify-end gap-2">
@@ -312,7 +362,7 @@ export function EarningsDashboard({ statement, payoutMethods, monthly, totals }:
             <div className="flex gap-2 border-t border-border pt-4">
               <input
                 className="input"
-                aria-label="Amount to withdraw (USD)"
+                aria-label="Payout amount (USD)"
                 placeholder="Amount (USD)"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
@@ -326,16 +376,16 @@ export function EarningsDashboard({ statement, payoutMethods, monthly, totals }:
             <Dialog>
               <DialogTrigger
                 render={
-                  <Button variant="primary" className="w-full" disabled={totals.available === 0 || withdrawing}>
-                    Confirm withdrawal
+                  <Button variant="primary" className="w-full" disabled={totals.available < minPayout || withdrawing}>
+                    Request payout
                   </Button>
                 }
               />
               <DialogContent>
-                <DialogTitle>Confirm withdrawal</DialogTitle>
+                <DialogTitle>Request this payout?</DialogTitle>
                 <DialogDescription>
-                  {formatCurrency(Number(amount) || totals.available)} will move from your available balance to your bank
-                  account. This is a simulated ledger entry — no real transfer happens.
+                  {formatCurrency(Number(amount) || totals.available)} leaves your available balance now and is sent to your
+                  bank account by the Naano team. Minimum payout is {formatCurrency(minPayout)}.
                 </DialogDescription>
                 <div className="mt-5 flex justify-end gap-2">
                   <DialogClose render={<Button variant="ghost">Cancel</Button>} />
@@ -346,6 +396,8 @@ export function EarningsDashboard({ statement, payoutMethods, monthly, totals }:
           </Card>
         </aside>
       </div>
+
+      <PayoutRequests requests={payoutRequests} />
     </>
   );
 }

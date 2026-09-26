@@ -6,6 +6,7 @@ import {
   collaborationActionSchema,
   collaborationIdSchema,
   inviteCreatorSchema,
+  openDisputeSchema,
   requestRevisionSchema,
   submitPostSchema,
 } from "@/lib/validations/collaborations";
@@ -238,6 +239,24 @@ export async function requestRevisionAction(input: unknown): Promise<Collaborati
   const { error } = await supabase.rpc("request_collaboration_revision", {
     p_collaboration_id: parsed.data.collaborationId,
     p_note: parsed.data.note,
+  });
+  if (error) return { error: error.message };
+  return {};
+}
+
+export async function openDisputeAction(input: unknown): Promise<CollaborationActionResult> {
+  const parsed = openDisputeSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You need to sign in first." };
+
+  const { error } = await supabase.rpc("open_dispute", {
+    p_collaboration_id: parsed.data.collaborationId,
+    p_reason: parsed.data.reason,
   });
   if (error) return { error: error.message };
   return {};

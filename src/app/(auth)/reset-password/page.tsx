@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/text-field";
 import { updatePasswordAction } from "@/lib/actions/auth";
+import { homePathFor } from "@/lib/auth/home-path";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -32,9 +33,7 @@ export default function ResetPasswordPage() {
     }
     toast.success("Password updated");
     router.refresh();
-    router.push(
-      !result.role ? "/onboarding" : result.role === "creator" ? "/dashboard/creator/overview" : "/dashboard/brand/overview",
-    );
+    router.push(result.role ? homePathFor(result.role) : "/onboarding");
   }
 
   return (

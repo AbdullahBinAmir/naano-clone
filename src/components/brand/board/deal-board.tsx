@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { approvePostAction, requestRevisionAction, updateCollaborationStatusAction } from "@/lib/actions/collaborations";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { DisputeDialog } from "@/components/collaborations/dispute-dialog";
 import { startCheckoutAction } from "@/lib/actions/payments";
 import type { BoardDeal } from "@/lib/brand/get-brand-deals";
 import type { CollaborationStatus } from "@/types/database";
@@ -26,8 +27,9 @@ const COLUMNS: Column[] = [
   { status: "pending_payment", title: "Awaiting payment", hint: "Accepted — pay to start the work" },
   { status: "active", title: "Active", hint: "Paid — creators publish their posts" },
   { status: "in_review", title: "In review", hint: "Approve the post to release the payout" },
+  { status: "disputed", title: "Disputed", hint: "Naano is reviewing — payment is frozen" },
   { status: "completed", title: "Completed", hint: "Marked as posted by the creator" },
-  { status: "declined", title: "Declined", hint: "Closed without a booking" },
+  { status: "declined", title: "Declined", hint: "Closed or refunded without a completed post" },
 ];
 
 /**
@@ -49,6 +51,7 @@ export function DealBoard({ deals: initialDeals }: { deals: BoardDeal[] }) {
   const [dragging, setDragging] = React.useState<BoardDeal | null>(null);
   const [overColumn, setOverColumn] = React.useState<CollaborationStatus | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
+  const [disputeId, setDisputeId] = React.useState<string | null>(null);
   const [reviseTarget, setReviseTarget] = React.useState<BoardDeal | null>(null);
   const [note, setNote] = React.useState("");
 
@@ -139,7 +142,7 @@ export function DealBoard({ deals: initialDeals }: { deals: BoardDeal[] }) {
   return (
     <div className="grid auto-cols-[minmax(13.5rem,1fr)] grid-flow-col gap-4 overflow-x-auto pb-4">
       {COLUMNS.map((col) => {
-        const items = deals.filter((d) => d.status === col.status);
+        const items = deals.filter((d) => d.status === col.status || (col.status === "declined" && d.status === "refunded"));
         const droppable = dragging ? canMove(dragging.status, col.status) : false;
         const dimmed = dragging !== null && dragging.status !== col.status && !droppable;
 
@@ -251,8 +254,25 @@ export function DealBoard({ deals: initialDeals }: { deals: BoardDeal[] }) {
                             Changes
                           </Button>
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => setDisputeId(d.id)}
+                          className="self-start text-[13px] text-foreground-muted underline-offset-2 hover:text-foreground hover:underline"
+                        >
+                          Report a problem
+                        </button>
                       </div>
                     )}
+                    {d.status === "active" && d.fundedAt && (
+                      <button
+                        type="button"
+                        onClick={() => setDisputeId(d.id)}
+                        className="self-start text-[13px] text-foreground-muted underline-offset-2 hover:text-foreground hover:underline"
+                      >
+                        Report a problem
+                      </button>
+                    )}
+                    {d.status === "refunded" && <p className="text-[13px] text-foreground-muted">Refunded</p>}
                     {d.status === "pending_payment" && (
                       <div className="flex gap-2">
                         <Button size="sm" variant="primary" className="flex-1" disabled={busy} onClick={() => pay(d)}>
@@ -305,6 +325,12 @@ export function DealBoard({ deals: initialDeals }: { deals: BoardDeal[] }) {
           </div>
         </DialogContent>
       </Dialog>
+      <DisputeDialog
+        collaborationId={disputeId}
+        open={disputeId !== null}
+        onOpenChange={(o) => !o && setDisputeId(null)}
+        onOpened={() => router.refresh()}
+      />
     </div>
   );
 }

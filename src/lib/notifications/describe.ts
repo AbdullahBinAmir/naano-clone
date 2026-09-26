@@ -67,6 +67,32 @@ export function describeNotification(row: NotificationRow, role: "creator" | "br
       title = `${str(p.brand_name, "The brand")} asked for changes`;
       body = str(p.note, campaign);
       break;
+    case "dispute_opened":
+      title = "A dispute was opened on your deal";
+      body = `Payment is frozen while Naano reviews it · ${campaign}`;
+      break;
+    case "dispute_resolved_release":
+      title = "Dispute resolved — payout released";
+      body = campaign;
+      break;
+    case "deal_refunded":
+      title = "A deal was refunded to the brand";
+      body = campaign;
+      break;
+    case "payment_expired":
+      title = "A deal was cancelled — payment wasn't received in time";
+      body = campaign;
+      break;
+    case "payout_paid":
+      title = "Your payout was sent";
+      body = typeof p.amount === "number" ? `$${p.amount.toLocaleString("en-US")}${typeof p.reference === "string" && p.reference ? ` · ref ${p.reference}` : ""}` : null;
+      href = "/dashboard/creator/earnings";
+      break;
+    case "payout_failed":
+      title = "Your payout couldn't be sent";
+      body = str(p.note, "The amount was returned to your balance.");
+      href = "/dashboard/creator/earnings";
+      break;
     case "payment_required":
       title = "A deal is waiting for your payment";
       body = campaign;

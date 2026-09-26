@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, EarningsLedgerRow, PayoutMethodRow } from "@/types/database";
+import type { Database, EarningsLedgerRow, PayoutMethodRow, PayoutRequestRow } from "@/types/database";
 
 export interface StatementLine {
   id: string;
@@ -17,6 +17,9 @@ export interface EarningsSummary {
   entries: EarningsLedgerRow[];
   statement: StatementLine[];
   payoutMethods: PayoutMethodRow[];
+  /** Bank payout requests, newest first, with where each one stands. */
+  payoutRequests: PayoutRequestRow[];
+  minPayout: number;
   monthly: { month: string; amount: number }[];
   totals: {
     totalEarned: number;
@@ -43,13 +46,15 @@ export async function getEarningsSummaryForCreator(
     console.error("settle_pending_earnings failed (non-fatal):", e);
   }
 
-  const [{ data: entries }, { data: payoutMethods }] = await Promise.all([
+  const [{ data: entries }, { data: payoutMethods }, { data: payoutRequests }, { data: settings }] = await Promise.all([
     supabase
       .from("earnings_ledger")
       .select("*")
       .eq("creator_profile_id", creatorProfileId)
       .order("created_at", { ascending: false }),
     supabase.from("payout_methods").select("*").eq("creator_profile_id", creatorProfileId),
+    supabase.from("payout_requests").select("*").eq("creator_profile_id", creatorProfileId).order("requested_at", { ascending: false }),
+    supabase.from("platform_settings").select("min_payout").maybeSingle(),
   ]);
 
   const rows = entries ?? [];
@@ -64,6 +69,7 @@ export async function getEarningsSummaryForCreator(
     collaboration_payout: "Collaboration payout",
     affiliate_reward: "Affiliate reward",
     referral_bonus: "Referral bonus",
+    payout_reversal: "Payout returned",
   };
   const statement: StatementLine[] = rows.map((r) => {
     const c = r.collaboration_id ? collabById.get(r.collaboration_id) : undefined;
@@ -96,6 +102,8 @@ export async function getEarningsSummaryForCreator(
     entries: rows,
     statement,
     payoutMethods: payoutMethods ?? [],
+    payoutRequests: payoutRequests ?? [],
+    minPayout: Number(settings?.min_payout ?? 10),
     monthly: monthBuckets.map(({ month, amount }) => ({ month, amount })),
     totals: {
       totalEarned: rows.reduce((acc, e) => acc + Number(e.amount), 0),

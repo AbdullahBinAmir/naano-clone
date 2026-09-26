@@ -6,8 +6,11 @@ export const withdrawalSchema = z.object({
 
 export const payoutMethodSchema = z.object({
   bankAccountHolder: z.string().trim().min(1, "Enter the account holder's name").max(120),
-  bankLastFour: z
+  bankName: z.string().trim().min(2, "Enter your bank's name").max(120),
+  // IBAN or local account number; spaces and dashes are ignored.
+  accountNumber: z
     .string()
     .trim()
-    .regex(/^\d{4}$/, "Enter the last 4 digits of the account number"),
+    .transform((v) => v.replace(/[\s-]/g, "").toUpperCase())
+    .pipe(z.string().regex(/^[A-Z0-9]{8,34}$/, "Enter your IBAN or account number (8–34 letters and digits)")),
 });

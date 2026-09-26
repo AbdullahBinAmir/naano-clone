@@ -25,6 +25,11 @@ export const requestRevisionSchema = z.object({
   note: z.string().trim().min(1, "Tell the creator what to change").max(500),
 });
 
+export const openDisputeSchema = z.object({
+  collaborationId: z.string().uuid(),
+  reason: z.string().trim().min(10, "Describe the problem in at least 10 characters").max(1000),
+});
+
 export const collaborationIdSchema = z.object({ collaborationId: z.string().uuid() });
 
 export const collaborationActionSchema = z.object({
