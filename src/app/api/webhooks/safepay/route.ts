@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import crypto from "node:crypto";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { verifyWebhookSignature } from "@/lib/safepay/client";
 import { missingSafepayEnv } from "@/lib/safepay/config";
 import { settlePayment } from "@/lib/safepay/settle";
@@ -17,6 +19,20 @@ export async function POST(request: Request) {
   const data = body.data as { token?: string; tracker?: string | { token?: string }; notification?: { tracker?: string } };
   const tracker =
     (typeof data.tracker === "string" ? data.tracker : data.tracker?.token) ?? data.token ?? data.notification?.tracker;
+
+  // Keep every verified delivery (deduped by content) so what Safepay really sends can be audited.
+  await createAdminClient()
+    .from("payment_events")
+    .upsert(
+      {
+        dedupe_key: `webhook:${crypto.createHash("sha256").update(JSON.stringify(body)).digest("hex")}`,
+        tracker: tracker ?? null,
+        source: "webhook",
+        payload: body as Record<string, unknown>,
+      },
+      { onConflict: "dedupe_key", ignoreDuplicates: true },
+    );
+
   if (!tracker) return NextResponse.json({ ok: true, ignored: "no tracker" });
 
   try {

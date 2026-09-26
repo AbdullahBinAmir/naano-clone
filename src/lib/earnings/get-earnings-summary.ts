@@ -92,6 +92,7 @@ export async function getEarningsSummaryForCreator(
     return { key: `${d.getFullYear()}-${d.getMonth()}`, month: d.toLocaleDateString("en-US", { month: "short" }), amount: 0 };
   });
   for (const row of rows) {
+    if (row.type === "payout_reversal") continue; // money coming back, not new earnings
     const d = new Date(row.created_at);
     const key = `${d.getFullYear()}-${d.getMonth()}`;
     const bucket = monthBuckets.find((b) => b.key === key);
@@ -106,7 +107,8 @@ export async function getEarningsSummaryForCreator(
     minPayout: Number(settings?.min_payout ?? 10),
     monthly: monthBuckets.map(({ month, amount }) => ({ month, amount })),
     totals: {
-      totalEarned: rows.reduce((acc, e) => acc + Number(e.amount), 0),
+      // A returned (failed) payout puts money back in the balance but isn't new income.
+      totalEarned: rows.filter((e) => e.type !== "payout_reversal").reduce((acc, e) => acc + Number(e.amount), 0),
       inTransit: sumByStatus("in_transit"),
       available: sumByStatus("available"),
       // A withdrawal that only partially consumes a payout row splits it in
