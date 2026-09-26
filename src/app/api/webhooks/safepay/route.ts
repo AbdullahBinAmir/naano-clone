@@ -18,7 +18,10 @@ export async function POST(request: Request) {
   } catch {
     body = null;
   }
-  if (!body?.data || !verifyWebhookSignature({ data: body.data, body, rawText }, request.headers.get("x-sfpy-signature"))) {
+  const verifiedWith = body?.data
+    ? verifyWebhookSignature({ data: body.data, body, rawText }, request.headers.get("x-sfpy-signature"))
+    : null;
+  if (!body?.data || !verifiedWith) {
     // Diagnostic switch for first-time setup: with SAFEPAY_WEBHOOK_DEBUG=1 a rejected
     // delivery is kept (headers minus secrets, plus body) so a wrong secret or an
     // unexpected format can be diagnosed. Off by default — otherwise anyone could
@@ -44,9 +47,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
+  // Real deliveries look like { data: { type: "payment:created", token: "<notification id>",
+  // notification: { tracker: "track_…", state: "PAID", … } } } — `data.token` is NOT the tracker.
   const data = body.data as { token?: string; tracker?: string | { token?: string }; notification?: { tracker?: string } };
-  const tracker =
-    (typeof data.tracker === "string" ? data.tracker : data.tracker?.token) ?? data.token ?? data.notification?.tracker;
+  const candidates = [
+    data.notification?.tracker,
+    typeof data.tracker === "string" ? data.tracker : data.tracker?.token,
+    data.token,
+  ];
+  const tracker = candidates.find((t): t is string => typeof t === "string" && t.startsWith("track_"));
 
   // Keep every verified delivery (deduped by content) so what Safepay really sends can be audited.
   await createAdminClient()
@@ -56,7 +65,7 @@ export async function POST(request: Request) {
         dedupe_key: `webhook:${crypto.createHash("sha256").update(JSON.stringify(body)).digest("hex")}`,
         tracker: tracker ?? null,
         source: "webhook",
-        payload: body as Record<string, unknown>,
+        payload: { ...body, _verifiedWith: verifiedWith } as Record<string, unknown>,
       },
       { onConflict: "dedupe_key", ignoreDuplicates: true },
     );
