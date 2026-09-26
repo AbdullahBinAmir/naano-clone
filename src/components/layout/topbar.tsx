@@ -13,12 +13,15 @@ import type { DashboardIdentity } from "@/components/layout/dashboard-shell";
 import type { NavItem } from "@/components/layout/sidebar";
 import { useSignOut } from "@/hooks/use-sign-out";
 import type { CollabStats } from "@/lib/dashboard/get-collab-stats";
+import type { NotificationsSummary } from "@/lib/notifications/get-notifications";
+import { markNotificationsReadAction } from "@/lib/actions/notifications";
 import { initials } from "@/lib/utils";
 
 export function Topbar({
   role,
   identity,
   stats,
+  notifications,
   collaborationsHref,
   navItems,
   badges,
@@ -27,6 +30,7 @@ export function Topbar({
   role: "creator" | "brand";
   identity: DashboardIdentity;
   stats: CollabStats;
+  notifications: NotificationsSummary;
   collaborationsHref: string;
   navItems: readonly NavItem[];
   badges: Record<string, number>;
@@ -85,25 +89,60 @@ export function Topbar({
             className="relative flex h-12 w-12 items-center justify-center rounded-md border border-border bg-card-raised text-foreground-muted transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:outline-none"
           >
             <Bell className="h-5 w-5" strokeWidth={1.75} />
-            {stats.needsAction > 0 && (
+            {(notifications.unreadCount > 0 || stats.needsAction > 0) && (
               <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-danger" aria-hidden="true" />
             )}
           </BasePopover.Trigger>
           <BasePopover.Portal>
             <BasePopover.Positioner sideOffset={10} align="end">
               <BasePopover.Popup className="z-50 w-80 rounded-lg border border-border bg-card-raised p-2 outline-none transition-all duration-150 data-[starting-style]:scale-95 data-[starting-style]:opacity-0">
-                <p className="px-3 py-2 text-sm font-medium text-foreground-muted">Notifications</p>
-                {stats.needsAction > 0 ? (
+                <div className="flex items-center justify-between px-3 py-2">
+                  <p className="text-sm font-medium text-foreground-muted">Notifications</p>
+                  {notifications.unreadCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await markNotificationsReadAction();
+                        router.refresh();
+                      }}
+                      className="text-xs text-accent hover:underline focus-visible:underline focus-visible:outline-none"
+                    >
+                      Mark all as read
+                    </button>
+                  )}
+                </div>
+                {stats.needsAction > 0 && (
                   <Link
                     href={collaborationsHref}
-                    className="block rounded-md px-3 py-2.5 text-sm text-foreground hover:bg-white/[0.05]"
+                    className="block rounded-md bg-accent-soft px-3 py-2.5 text-sm font-medium text-accent-soft-foreground"
                   >
                     {stats.needsAction === 1
                       ? "1 collaboration needs your action"
                       : `${stats.needsAction} collaborations need your action`}
                   </Link>
+                )}
+                {notifications.items.length > 0 ? (
+                  <ul className="mt-1 flex max-h-96 flex-col overflow-y-auto">
+                    {notifications.items.map((n) => (
+                      <li key={n.id}>
+                        <Link href={n.href} className="flex gap-2.5 rounded-md px-3 py-2.5 text-sm hover:bg-white/[0.05]">
+                          <span
+                            aria-hidden="true"
+                            className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.unread ? "bg-accent" : "bg-transparent"}`}
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className={`block ${n.unread ? "font-medium text-foreground" : "text-foreground-muted"}`}>
+                              {n.title}
+                            </span>
+                            {n.body && <span className="block truncate text-xs text-foreground-subtle">{n.body}</span>}
+                            <span className="block text-xs text-foreground-subtle">{n.timeLabel}</span>
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
                 ) : (
-                  <p className="px-3 py-2.5 text-sm text-foreground-muted">You&apos;re all caught up.</p>
+                  stats.needsAction === 0 && <p className="px-3 py-2.5 text-sm text-foreground-muted">You&apos;re all caught up.</p>
                 )}
               </BasePopover.Popup>
             </BasePopover.Positioner>

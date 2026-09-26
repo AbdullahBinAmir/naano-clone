@@ -4,14 +4,16 @@ import { BRAND_NAV } from "@/lib/constants";
 import { requireProfile } from "@/lib/auth/require-profile";
 import { createClient } from "@/lib/supabase/server";
 import { getCollabStats } from "@/lib/dashboard/get-collab-stats";
+import { getNotifications } from "@/lib/notifications/get-notifications";
 
 export default async function BrandDashboardLayout({ children }: { children: ReactNode }) {
   const { user, profile } = await requireProfile("brand");
 
   const supabase = await createClient();
-  const [{ data: brandProfile }, stats] = await Promise.all([
+  const [{ data: brandProfile }, stats, notifications] = await Promise.all([
     supabase.from("brand_profiles").select("company_name, logo_url").eq("profile_id", user.id).maybeSingle(),
     getCollabStats(supabase, user.id, "brand"),
+    getNotifications(supabase, user.id, "brand"),
   ]);
 
   const identity = {
@@ -21,7 +23,7 @@ export default async function BrandDashboardLayout({ children }: { children: Rea
   };
 
   return (
-    <DashboardShell role="brand" navItems={BRAND_NAV} identity={identity} stats={stats}>
+    <DashboardShell role="brand" navItems={BRAND_NAV} identity={identity} stats={stats} notifications={notifications}>
       {children}
     </DashboardShell>
   );

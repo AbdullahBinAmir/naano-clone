@@ -4,6 +4,7 @@ import { Sidebar, type NavItem } from "@/components/layout/sidebar";
 import { SignOutButton } from "@/components/layout/sign-out-button";
 import { DashboardAssistant } from "@/components/layout/dashboard-assistant";
 import type { CollabStats } from "@/lib/dashboard/get-collab-stats";
+import type { NotificationsSummary } from "@/lib/notifications/get-notifications";
 
 export interface DashboardIdentity {
   displayName: string;
@@ -16,6 +17,7 @@ export function DashboardShell({
   navItems,
   identity,
   stats,
+  notifications,
   walletBalance,
   publicCardHandle,
   children,
@@ -24,6 +26,7 @@ export function DashboardShell({
   navItems: readonly NavItem[];
   identity: DashboardIdentity;
   stats: CollabStats;
+  notifications: NotificationsSummary;
   walletBalance?: number;
   /** Creator only: handle of their published card, or null if not published yet. */
   publicCardHandle?: string | null;
@@ -39,6 +42,7 @@ export function DashboardShell({
         role={role}
         identity={identity}
         stats={stats}
+        notifications={notifications}
         collaborationsHref={collaborationsHref}
         navItems={navItems}
         badges={badges}

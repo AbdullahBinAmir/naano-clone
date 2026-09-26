@@ -2,6 +2,7 @@ import { CreditCard, Receipt } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardTitle } from "@/components/ui/card";
+import { TestModeNotice } from "@/components/ui/test-mode-notice";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { requireProfile } from "@/lib/auth/require-profile";
 import { createClient } from "@/lib/supabase/server";
@@ -54,6 +55,8 @@ export default async function BillingPage() {
   return (
     <>
       <PageHeader eyebrow="Billing" title="Billing" description="Your plan, what you've booked, and your payment method." />
+
+      <TestModeNotice>Bookings here are agreed values only — nothing is charged and no invoices are issued yet.</TestModeNotice>
 
       <div className="grid gap-4 md:grid-cols-3">
         {[

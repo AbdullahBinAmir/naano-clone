@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Naano
 
-## Getting Started
+A B2B LinkedIn creator marketplace (a clone of naano.com). Brands find and book
+LinkedIn creators for sponsored posts; creators publish a card, apply to briefs
+and track earnings. Next.js 16 (App Router) + Supabase + Tailwind v4.
 
-First, run the development server:
+> **Status: internal-testing build.** All money is simulated — no payments
+> gateway is connected. See [docs/INTERNAL-TESTING.md](docs/INTERNAL-TESTING.md)
+> for test accounts, a walkthrough and known limitations.
+
+## Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+cp .env.example .env.local   # fill in the two Supabase values
+pnpm dev                     # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Environment (`.env.local`, see `.env.example`):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Notes |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable (anon) key. Row Level Security is the only security boundary — **no service-role key is used anywhere.** |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Database
 
-## Learn More
+Apply every file in `supabase/migrations/` **in order** (Supabase dashboard →
+SQL editor). `0001` creates the schema and RLS; later files add integrity
+rules, RPCs, direct conversations, campaign deadlines and notifications.
 
-To learn more about Next.js, take a look at the following resources:
+### Auth settings (Supabase dashboard → Authentication)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **URL Configuration:** add your site URL(s) and `<site>/auth/callback` to the
+  redirect allow-list (e.g. `http://localhost:3000/auth/callback` and your
+  Vercel URL). Password-reset and email-confirmation links depend on it.
+- **Confirm email:** on = testers must click an emailed link after sign-up;
+  off = instant sign-in.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Demo data
 
-## Deploy on Vercel
+```bash
+node scripts/seed-demo.mjs
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Creates 3 creators and 3 brands with campaigns, collaborations, messages,
+analytics and earnings. Every seeded account uses the password `12345678`.
+Re-runnable. **Never run it against a production project.** Optional:
+`scripts/demo-due-dates.sql` sets due dates on the seeded collaborations.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Scripts
+
+```bash
+pnpm dev     # dev server
+pnpm lint    # eslint (must be clean)
+pnpm build   # production build (also typechecks)
+```
+
+## Project layout
+
+- `src/app/` — routes: marketing (`/`, `/pricing`), auth, public creator cards
+  (`/creators/[handle]`), and the `dashboard/creator` and `dashboard/brand` areas
+- `src/components/ui/` — shared design-system components (reuse before building page-specific ones)
+- `src/lib/actions/` — server actions (all writes); `src/lib/supabase/` — clients
+- `docs/design/DESIGN.md` — the design system every screen follows
+- `supabase/migrations/` — schema, RLS and RPCs
+
+## Deploying (Vercel)
+
+Set the two `NEXT_PUBLIC_SUPABASE_*` variables, apply all migrations, and add
+the deployed URL to Supabase's auth redirect allow-list.

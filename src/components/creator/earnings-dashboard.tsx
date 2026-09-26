@@ -6,6 +6,7 @@ import NumberFlow from "@number-flow/react";
 import { toast } from "sonner";
 import { Banknote, Receipt } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
+import { TestModeNotice } from "@/components/ui/test-mode-notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
@@ -195,6 +196,10 @@ export function EarningsDashboard({ statement, payoutMethods, monthly, totals }:
         description="Every payout from your collaborations, and what you can withdraw."
       />
 
+      <TestModeNotice>
+        Earnings and withdrawals are simulated in this build. Nothing is paid out to a real bank account.
+      </TestModeNotice>
+
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="flex min-w-0 flex-col gap-6">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -215,7 +220,7 @@ export function EarningsDashboard({ statement, payoutMethods, monthly, totals }:
                 <NumberFlow value={totals.inTransit} format={EUR} />
               </p>
               <p className="mt-2 text-[13px] text-foreground-muted">
-                Simulated settlement — moves to Available shortly after a collaboration is marked posted.
+                Moves to Available shortly after a collaboration is marked posted (simulated settlement).
               </p>
             </Card>
           </div>
@@ -303,10 +308,6 @@ export function EarningsDashboard({ statement, payoutMethods, monthly, totals }:
                 </Dialog>
               </div>
             </div>
-            <p className="text-[13px] text-foreground-muted">
-              Balances are simulated — no real money moves and no Stripe account is needed.
-            </p>
-
             <div className="flex gap-2 border-t border-border pt-4">
               <input
                 className="input"
@@ -333,7 +334,7 @@ export function EarningsDashboard({ statement, payoutMethods, monthly, totals }:
                 <DialogTitle>Confirm withdrawal</DialogTitle>
                 <DialogDescription>
                   {formatCurrency(Number(amount) || totals.available)} will move from your available balance to your bank
-                  account. This is a simulated ledger entry — no real money moves.
+                  account. This is a simulated ledger entry — no real transfer happens.
                 </DialogDescription>
                 <div className="mt-5 flex justify-end gap-2">
                   <DialogClose render={<Button variant="ghost">Cancel</Button>} />
